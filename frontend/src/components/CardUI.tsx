@@ -1,90 +1,78 @@
 import React, { useState } from 'react';
-
-const app_name = 'colorsdigitalocean.xyz';
-
-function buildPath(route: string): string {
-  // When running "npm run dev" locally:
-  if (import.meta.env.MODE === 'development') {
-    return 'http://localhost:5000/' + route;
-  }
-  // When running the built site on the droplet (HTTPS enabled)
-  return 'https://' + app_name + '/' + route;
-}
+import axios from 'axios';
+import { buildPath } from './Path';
+import { retrieveToken, storeToken } from '../tokenStorage';
 
 function CardUI() {
-  let _ud: any = localStorage.getItem('user_data');
-  let ud = JSON.parse(_ud);
-  let userId: string = ud.id;
+  const _ud = localStorage.getItem('user_data');
+  const ud = _ud ? JSON.parse(_ud) : null;
+  // prefer new key (userId), fallback to old (id)
+  const userId: number = (ud?.userId ?? ud?.id) ?? -1;
 
-  const [message, setMessage] = useState('');
-  const [searchResults, setResults] = useState('');
-  const [cardList, setCardList] = useState('');
-  const [search, setSearchValue] = React.useState('');
-  const [card, setCardNameValue] = React.useState('');
+  const [message, setMessage] = useState<string>('');
+  const [searchResults, setResults] = useState<string>('');
+  const [cardList, setCardList] = useState<string>('');
+  const [search, setSearchValue] = React.useState<string>('');
+  const [card, setCardNameValue] = React.useState<string>('');
 
-  function handleSearchTextChange(e: React.ChangeEvent<HTMLInputElement>): void {
+  function handleSearchTextChange(e: React.ChangeEvent<HTMLInputElement>) {
     setSearchValue(e.target.value);
   }
 
-  function handleCardTextChange(e: React.ChangeEvent<HTMLInputElement>): void {
+  function handleCardTextChange(e: React.ChangeEvent<HTMLInputElement>) {
     setCardNameValue(e.target.value);
   }
 
-  async function addCard(e: React.MouseEvent<HTMLButtonElement>): Promise<void> {
+  async function addCard(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
-    const obj = { userId: userId, card: card };
-    const js = JSON.stringify(obj);
 
     try {
-      const response = await fetch(buildPath('api/addcard'), {
-        method: 'POST',
-        body: js,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const { data: res } = await axios.post(
+        buildPath('api/addcard'),
+        {
+          userId,
+          card,
+          jwtToken: retrieveToken(),
+        },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
 
-      const txt = await response.text();
-      const res = JSON.parse(txt);
-
-      if (res.error.length > 0) {
+      if (res?.error && res.error.length > 0) {
         setMessage('API Error: ' + res.error);
       } else {
         setMessage('Card has been added');
       }
-    } catch (error: any) {
-      setMessage(error.toString());
+
+      // store refreshed token if present
+      if (res?.jwtToken) storeToken(res.jwtToken);
+    } catch (err: any) {
+      console.error(err);
+      setMessage('Network or server error adding card.');
     }
   }
 
-  async function searchCard(e: React.MouseEvent<HTMLButtonElement>): Promise<void> {
+  async function searchCard(e: React.MouseEvent<HTMLButtonElement>) {
     e.preventDefault();
-    const obj = { userId: userId, search: search };
-    const js = JSON.stringify(obj);
 
     try {
-      const response = await fetch(buildPath('api/searchcards'), {
-        method: 'POST',
-        body: js,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const { data: res } = await axios.post(
+        buildPath('api/searchcards'),
+        {
+          userId,
+          search,
+          jwtToken: retrieveToken(),
+        },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
 
-      const txt = await response.text();
-      const res = JSON.parse(txt);
-
-      const _results = res.results;
-      let resultText = '';
-
-      for (let i = 0; i < _results.length; i++) {
-        resultText += _results[i];
-        if (i < _results.length - 1) {
-          resultText += ', ';
-        }
-      }
-
+      const resultsArr: string[] = res?.results || [];
       setResults('Card(s) have been retrieved');
-      setCardList(resultText);
-    } catch (error: any) {
-      alert(error.toString());
-      setResults(error.toString());
+      setCardList(resultsArr.join(', '));
+
+      if (res?.jwtToken) storeToken(res.jwtToken);
+    } catch (err: any) {
+      console.error(err);
+      setResults('Network or server error searching cards.');
     }
   }
 

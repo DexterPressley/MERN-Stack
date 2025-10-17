@@ -1,71 +1,82 @@
 import React, { useState } from 'react';
+import axios from 'axios';
+import { buildPath } from './Path';
+import { storeToken } from '../tokenStorage';
+import { jwtDecode } from 'jwt-decode';
 
-const app_name = 'colorsdigitalocean.xyz';
-
-function buildPath(route: string): string {
-  // When running "npm run dev" locally:
-  if (import.meta.env.MODE === 'development') {
-    return 'http://localhost:5000/' + route;
-  }
-  // When running the built site on the droplet (HTTPS enabled)
-  return 'https://' + app_name + '/' + route;
-}
+type TokenPayload = {
+  userId: number;
+  firstName: string;
+  lastName: string;
+  iat?: number;
+  exp?: number;
+};
 
 function Login() {
   const [message, setMessage] = useState('');
   const [loginName, setLoginName] = useState('');
   const [loginPassword, setPassword] = useState('');
 
-  function handleSetLoginName(e: React.ChangeEvent<HTMLInputElement>): void {
+  function handleSetLoginName(e: React.ChangeEvent<HTMLInputElement>) {
     setLoginName(e.target.value);
   }
-
-  function handleSetPassword(e: React.ChangeEvent<HTMLInputElement>): void {
+  function handleSetPassword(e: React.ChangeEvent<HTMLInputElement>) {
     setPassword(e.target.value);
   }
 
-  // Make doLogin async
   async function doLogin(
     event: React.MouseEvent<HTMLInputElement, MouseEvent>
   ): Promise<void> {
     event.preventDefault();
 
-    const obj = { login: loginName, password: loginPassword };
-    const js = JSON.stringify(obj);
-
     try {
-      // If you set a Vite proxy for /api, you can use '/api/login' instead of the full URL.
-      const response = await fetch(buildPath('api/login'), {
-        method: 'POST',
-        body: js,
-        headers: { 'Content-Type': 'application/json' },
-      });
+      const { data: res } = await axios.post(
+        buildPath('api/login'),
+        { login: loginName, password: loginPassword },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
 
-      const res = JSON.parse(await response.text());
-
-      if (res.id <= 0) {
+      // expecting either { accessToken } or { error }
+      if (res?.error) {
         setMessage('User/Password combination incorrect');
-      } else {
-        const user = {
-          firstName: res.firstName,
-          lastName: res.lastName,
-          id: res.id,
-        };
-        localStorage.setItem('user_data', JSON.stringify(user));
-        setMessage('');
-        window.location.href = '/cards'; // follows your professor’s example
-        // (Alternative with react-router: navigate('/cards'))
+        return;
       }
-    } catch (error: any) {
-      alert(error.toString());
-      return;
+
+      const accessToken: string | undefined = res?.accessToken;
+      if (!accessToken) {
+        setMessage('Unexpected server response (no access token).');
+        return;
+      }
+
+      // store token (our helper accepts { accessToken })
+      storeToken({ accessToken });
+
+      // decode payload
+      const payload = jwtDecode<TokenPayload>(accessToken);
+      const userId = payload.userId;
+      const firstName = payload.firstName;
+      const lastName = payload.lastName;
+
+      if (!userId || userId <= 0) {
+        setMessage('User/Password combination incorrect');
+        return;
+      }
+
+      // save both keys for compatibility (id + userId)
+      const user = { firstName, lastName, id: userId, userId };
+      localStorage.setItem('user_data', JSON.stringify(user));
+
+      setMessage('');
+      window.location.href = '/cards';
+    } catch (err: any) {
+      console.error(err);
+      setMessage('Network or server error logging in.');
     }
   }
 
   return (
     <div id="loginDiv">
-      <span id="inner-title">PLEASE LOG IN</span>
-      <br />
+      <span id="inner-title">PLEASE LOG IN</span><br />
       Username:{' '}
       <input
         type="text"
