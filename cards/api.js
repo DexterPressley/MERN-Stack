@@ -10,35 +10,44 @@ exports.setApp = function (app, _mongoose) {
   // ------------------ /api/login ------------------
   // incoming: { login, password }
   // outgoing: { accessToken } | { error }
-  app.post('/api/login', async (req, res) => {
-    const { login, password } = req.body;
-    if (!login || !password) {
-      return res.status(400).json({ error: 'login and password are required' });
+// /api/login
+app.post('/api/login', async (req, res) => {
+  let { login, password } = req.body;
+
+  // Normalize inputs to avoid hidden whitespace issues
+  login = (login || '').trim();
+  password = (password || '').trim();
+
+  if (!login || !password) {
+    return res.status(400).json({ error: 'login and password are required' });
+  }
+
+  try {
+    // exact match on both fields
+    const u = await User.findOne({ Login: login, Password: password }).lean();
+
+    if (!u) {
+      // Log once while debugging (remove later)
+      console.log('Login not found for:', { login, passwordLength: password.length });
+      return res.status(200).json({ error: 'Login/Password incorrect' });
     }
+
+    const id = u.UserID;
+    const fn = u.FirstName;
+    const ln = u.LastName;
 
     try {
-      const results = await User.find({ Login: login, Password: password }).limit(1).lean();
-
-      if (results.length > 0) {
-        const u = results[0];
-        const id = u.UserID;                 // exact field per your Atlas
-        const fn = u.FirstName;
-        const ln = u.LastName;
-
-        try {
-          const ret = token.createToken(fn, ln, id);   // { accessToken } or { error }
-          return res.status(200).json(ret);
-        } catch (e) {
-          return res.status(200).json({ error: e.message });
-        }
-      } else {
-        return res.status(200).json({ error: 'Login/Password incorrect' });
-      }
-    } catch (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'server error' });
+      const ret = token.createToken(fn, ln, id); // { accessToken } or { error }
+      return res.status(200).json(ret);
+    } catch (e) {
+      return res.status(200).json({ error: e.message });
     }
-  });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: 'server error' });
+  }
+});
+
 
   // ------------------ /api/addcard ------------------
   // incoming: { userId, card, jwtToken }
