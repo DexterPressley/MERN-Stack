@@ -20,7 +20,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Connect with Mongoose
-mongoose.connect(uri)
+mongoose.connect(uri, { dbName: 'COP4331Cards' })
   .then(() => console.log('✅ MongoDB connected (Mongoose)'))
   .catch((err) => {
     console.error('❌ MongoDB connection error:', err.message);

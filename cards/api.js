@@ -128,5 +128,27 @@ exports.setApp = function (app, _mongoose) {
       return res.status(500).json({ results: [], error: 'server error', jwtToken: refreshedToken });
     }
   });
+
+// TEMP DEBUG: remove after testing
+app.get('/api/_debug', async (req, res) => {
+  try {
+    const uCount = await require('./models/user').countDocuments();
+    const cCount = await require('./models/card').countDocuments();
+    const oneUser = await require('./models/user').findOne({}).lean();
+    res.json({
+      db: require('mongoose').connection.name,            // which DB?
+      usersCollection: require('./models/user').collection.name,
+      cardsCollection: require('./models/card').collection.name,
+      usersCount: uCount,
+      cardsCount: cCount,
+      sampleUser: oneUser ? Object.keys(oneUser) : null,  // show field names
+    });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: e.message });
+  }
+});
+
+
 };
 
