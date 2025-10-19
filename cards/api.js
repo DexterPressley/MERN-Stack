@@ -2,11 +2,81 @@
 require('express');
 require('mongodb'); // harmless; not needed once on Mongoose
 
+const bcrypt = require('bcryptjs');
 const token = require('./createJWT.js');
 const User  = require('./models/user.js');
 const Card  = require('./models/card.js');
 
 exports.setApp = function (app, _mongoose) {
+
+  //------------------ /api/register ------------------
+  // incoming: { firstName, lastName, email, password }
+  // outgoing: { success: boolean, message: string, userId?: number }
+  app.post('/api/register', async (req, res) => {
+  try {
+    const { firstName, lastName, email, password } = req.body;
+
+    // Validation
+    if (!firstName || !lastName || !email || !password) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'All fields are required (firstName, lastName, email, password)' 
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Password must be at least 6 characters' 
+      });
+    }
+
+    // Check if user already exists (by email)
+    const existingUser = await User.findOne({ Email: email.toLowerCase() });
+    if (existingUser) {
+      return res.status(409).json({ 
+        success: false, 
+        message: 'User with this email already exists' 
+      });
+    }
+
+    // Hash password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    // Get next UserID (auto-increment)
+    const lastUser = await User.findOne().sort({ UserID: -1 }).lean();
+    const nextUserId = lastUser ? lastUser.UserID + 1 : 1;
+
+    // Create new user with hashed password
+    const newUser = new User({
+      UserID: nextUserId,
+      FirstName: firstName,
+      LastName: lastName,
+      Email: email.toLowerCase(),
+      Password: hashedPassword,
+      Login: email.toLowerCase(),
+      IsVerified: false,
+      CreatedAt: new Date()
+    });
+
+    await newUser.save();
+
+    return res.status(201).json({ 
+      success: true, 
+      message: 'User registered successfully',
+      userId: nextUserId 
+    });
+  } catch (e) {
+    console.error('Registration error:', e);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error during registration' 
+    });
+  }
+});
+    
+
   // ------------------ /api/login ------------------
   // incoming: { login, password }
   // outgoing: { accessToken } | { error }
@@ -23,14 +93,25 @@ app.post('/api/login', async (req, res) => {
   }
 
   try {
-    // exact match on both fields
-    const u = await User.findOne({ Login: login, Password: password }).lean();
+    // Compare exact match on login field(before password check)
+    const u = await User.findOne({ Login: login }).lean();
 
     if (!u) {
       // Log once while debugging (remove later)
       console.log('Login not found for:', { login, passwordLength: password.length });
       return res.status(200).json({ error: 'Login/Password incorrect' });
     }
+
+    // Compare password with hashed password
+    const isValidPassword = await bcrypt.compare(password, u.Password);
+    if (!isValidPassword) {
+        return res.status(200).json({ error: 'Login/Password incorrect' });
+      }
+
+      //email verification check, not implemented yet
+  // if (!u.IsVerified) {
+  //   return res.status(200).json({ error: 'Please verify your email before logging in' });
+  // }
 
     const id = u.UserID;
     const fn = u.FirstName;
