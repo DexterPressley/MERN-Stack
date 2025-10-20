@@ -14,13 +14,13 @@ exports.setApp = function (app, _mongoose) {
   // outgoing: { success: boolean, message: string, userId?: number }
   app.post('/api/register', async (req, res) => {
   try {
-    const { firstName, lastName, email, password } = req.body;
+    const { firstName, lastName, username, email, password } = req.body;
 
     // Validation
-    if (!firstName || !lastName || !email || !password) {
+    if (!firstName || !lastName || !username || !email || !password ) {
       return res.status(400).json({ 
         success: false, 
-        message: 'All fields are required (firstName, lastName, email, password)' 
+        message: 'All fields are required (firstName, lastName, username, email, password)' 
       });
     }
 
@@ -31,12 +31,20 @@ exports.setApp = function (app, _mongoose) {
       });
     }
 
-    // Check if user already exists (by email)
-    const existingUser = await User.findOne({ Email: email.toLowerCase() });
-    if (existingUser) {
+        // Check if user already exists (by email & username)
+    const existingEmail = await User.findOne({ Email: email.toLowerCase() });
+    if (existingEmail) {
       return res.status(409).json({ 
         success: false, 
         message: 'User with this email already exists' 
+      });
+    }
+
+    const existingUser = await User.findOne({ Username: username.toLowerCase() });
+    if (existingUser) {
+      return res.status(409).json({ 
+        success: false, 
+        message: 'This username already exists' 
       });
     }
 
@@ -53,9 +61,9 @@ exports.setApp = function (app, _mongoose) {
       UserID: nextUserId,
       FirstName: firstName,
       LastName: lastName,
+      Username: username.toLowerCase(),
       Email: email.toLowerCase(),
       Password: hashedPassword,
-      Login: email.toLowerCase(),
       IsVerified: false,
       CreatedAt: new Date()
     });
@@ -82,30 +90,30 @@ exports.setApp = function (app, _mongoose) {
   // outgoing: { accessToken } | { error }
 // /api/login
 app.post('/api/login', async (req, res) => {
-  let { login, password } = req.body;
+  let { username, password } = req.body;
 
   // Normalize inputs to avoid hidden whitespace issues
-  login = (login || '').trim();
+  username = (username || '').trim().toLowerCase();
   password = (password || '').trim();
 
-  if (!login || !password) {
-    return res.status(400).json({ error: 'login and password are required' });
+  if (!username || !password) {
+    return res.status(400).json({ error: 'Username and Password are required' });
   }
 
   try {
-    // Compare exact match on login field(before password check)
-    const u = await User.findOne({ Login: login }).lean();
+    // Compare exact match on username field(before password check)
+    const u = await User.findOne({ Username: username }).lean();
 
     if (!u) {
       // Log once while debugging (remove later)
-      console.log('Login not found for:', { login, passwordLength: password.length });
-      return res.status(200).json({ error: 'Login/Password incorrect' });
+      console.log('Login not found for:', { username, passwordLength: password.length });
+      return res.status(200).json({ error: 'Username/Password incorrect' });
     }
 
     // Compare password with hashed password
     const isValidPassword = await bcrypt.compare(password, u.Password);
     if (!isValidPassword) {
-        return res.status(200).json({ error: 'Login/Password incorrect' });
+        return res.status(200).json({ error: 'Username/Password incorrect' });
       }
 
       //email verification check, not implemented yet
@@ -118,7 +126,7 @@ app.post('/api/login', async (req, res) => {
     const ln = u.LastName;
 
     try {
-      const ret = token.createToken(fn, ln, id); // { accessToken } or { error }
+      const ret = token.createToken(fn, ln, id); // JWT accessToken or error
       return res.status(200).json(ret);
     } catch (e) {
       return res.status(200).json({ error: e.message });
