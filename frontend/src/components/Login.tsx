@@ -70,8 +70,13 @@ function Login() {
       window.location.href = '/cards';
     } catch (err: any) {
       console.error(err);
-      setMessage('Network or server error logging in.');
+      if (err.response && err.response.data && err.response.data.error) {
+        setMessage(err.response.data.error);
+      } else {
+        setMessage('Network or server error logging in.');
+      }
     }
+
   }
 
   return (
