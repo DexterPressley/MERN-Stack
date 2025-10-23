@@ -32,7 +32,7 @@ function Login() {
     try {
       const { data: res } = await axios.post(
         buildPath('api/login'),
-        { login: loginName, password: loginPassword },
+        { username: loginName, password: loginPassword },
         { headers: { 'Content-Type': 'application/json' } }
       );
 
