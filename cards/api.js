@@ -113,7 +113,14 @@ app.post('/api/login', async (req, res) => {
     // Compare password with hashed password
     const isValidPassword = await bcrypt.compare(password, u.Password);
     if (!isValidPassword) {
-        return res.status(200).json({ error: 'Username/Password incorrect' });
+       // Return user data along with token
+        return res.status(200).json({
+          accessToken: ret.accessToken,
+          userId: id,
+          firstName: fn,
+          lastName: ln,
+          username: username
+        });
       }
 
       //email verification check, not implemented yet
