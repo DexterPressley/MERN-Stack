@@ -79,6 +79,10 @@ function Login() {
 
   }
 
+  function goToRegister() {
+    window.location.href = '/register';
+  }
+
   return (
     <div id="loginDiv">
       <span id="inner-title">PLEASE LOG IN</span><br />
@@ -106,6 +110,16 @@ function Login() {
         onClick={doLogin}
       />
       <span id="loginResult">{message}</span>
+      <br /><br />
+      <span id="newUserText">New User?</span><br />
+      <button
+        type="button"
+        id="signUpButton"
+        className="buttons"
+        onClick={goToRegister}
+      >
+        Sign Up Now!
+      </button>
     </div>
   );
 }
