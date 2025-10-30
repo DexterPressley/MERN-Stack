@@ -131,10 +131,17 @@ app.post('/api/login', async (req, res) => {
     const id = u.UserID;
     const fn = u.FirstName;
     const ln = u.LastName;
-
+    const user = u.Username;
+    
     try {
       const ret = token.createToken(fn, ln, id); // JWT accessToken or error
-      return res.status(200).json(ret);
+      return res.status(200).json({// Return user data along with accessToken for Flutter
+        accessToken: ret.accessToken,
+        userId: id,
+        firstName: fn,
+        lastName: ln,
+        username: user
+      });
     } catch (e) {
       return res.status(200).json({ error: e.message });
     }
