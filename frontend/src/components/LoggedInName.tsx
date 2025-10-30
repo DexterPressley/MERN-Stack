@@ -30,7 +30,7 @@ function LoggedInName() {
 
   return (
     <div id="loggedInDiv">
-      <span id="userName">Logged In As John Doe </span><br />
+      <span id="userName">Logged In As {userName} </span><br />
       <button type="button" id="logoutButton" className="buttons" onClick={doLogout}>
         Log Out
       </button>
