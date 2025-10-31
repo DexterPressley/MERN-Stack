@@ -110,10 +110,22 @@ exports.login = async (req, res) => {
 
     try {
       const ret = token.createToken(fn, ln, id);
-      return res.status(200).json(ret);
+      return res.status(200).json({
+      success: true,
+      accessToken: ret.accessToken,
+      userId: id,
+      firstName: fn,
+      lastName: ln,
+      username: u.Username
+      });
     } catch (e) {
       return res.status(500).json({ error: e.message });
     }
+
+    
+
+
+
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'server error' });
