@@ -8,7 +8,7 @@ exports.sendVerificationEmail = async(email, token, firstName) => {
     const verificationUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
     const msg = {
         to: email,
-        from: `CalZone <${process.env.EMAIL_USER}>`,
+        from: 'noreply@sendgrid.net',
         subject: 'Verify Your Email - CalZone',
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #fafafa;">
@@ -52,7 +52,7 @@ exports.sendVerificationEmail = async(email, token, firstName) => {
 exports.sendUsernameEmail = async (email, username, firstName) => {
     const msg = {
         to: email,
-        from: `CalZone <${process.env.EMAIL_USER}>`,
+        from: 'noreply@sendgrid.net',
         subject: 'Your Username - CalZone',
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #fafafa;">
@@ -95,7 +95,7 @@ exports.sendPasswordResetEmail = async (email, token, firstName) => {
     
     const msg = {
         to: email,
-        from: `CalZone <${process.env.EMAIL_USER}>`,
+        from: 'noreply@sendgrid.net',
         subject: 'Reset Your Password - CalZone',
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #fafafa;">
