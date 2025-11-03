@@ -38,14 +38,17 @@ exports.sendVerificationEmail = async(email, token, firstName) => {
         text: `Welcome to CalZone!\n\nPlease verify your email by visiting:\n${verificationUrl}\n\nThis link expires in 24 hours.\n\nIf you didn't create this account, you can ignore this email.`
     };
 
-    try {
-        await sgMail.send(msg);
-        console.log(`✅ Verification email sent to ${email}`);
-        return true;
-    } catch (error) {
-        console.error('❌ Error sending verification email:', error);
-        throw error;
+try {
+    await sgMail.send(msg);
+    console.log(`✅ Verification email sent to ${email}`);
+    return true;
+} catch (error) {
+    console.error('❌ Error sending verification email:', error);
+    if (error.response && error.response.body && error.response.body.errors) {
+        console.error('SendGrid Error Details:', JSON.stringify(error.response.body.errors, null, 2));
     }
+    throw error;
+}
 };
 
 // Username recovery
@@ -79,14 +82,17 @@ exports.sendUsernameEmail = async (email, username, firstName) => {
         text: `Your username is: ${username}\n\nYou can use this to log in to your CalZone account.\n\nIf you didn't make this request, you can ignore this email.`
     };
 
-    try {
-        await sgMail.send(msg);
-        console.log(`✅ Username recovery email sent to ${email}`);
-        return true;
-    } catch (error) {
-        console.error('❌ Error sending username email:', error);
-        throw error;
+try {
+    await sgMail.send(msg);
+    console.log(`✅ Username recovery email sent to ${email}`);
+    return true;
+} catch (error) {
+    console.error('❌ Error sending username recovery email:', error);
+    if (error.response && error.response.body && error.response.body.errors) {
+        console.error('SendGrid Error Details:', JSON.stringify(error.response.body.errors, null, 2));
     }
+    throw error;
+}
 };
 
 // Password reset email
@@ -131,6 +137,9 @@ exports.sendPasswordResetEmail = async (email, token, firstName) => {
         return true;
     } catch (error) {
         console.error('❌ Error sending password reset email:', error);
+        if (error.response && error.response.body && error.response.body.errors) {
+            console.error('SendGrid Error Details:', JSON.stringify(error.response.body.errors, null, 2));
+        }
         throw error;
     }
 };
