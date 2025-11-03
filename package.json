@@ -20,6 +20,7 @@
   },
   "homepage": "https://github.com/DexterPressley/MERN-Stack#readme",
   "dependencies": {
+    "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -28,7 +29,8 @@
     "mongodb": "^6.20.0",
     "mongoose": "^8.19.1",
     "mongoose-int32": "^0.6.0",
-    "nodemailer": "^7.0.10"
+    "nodemailer": "^7.0.10",
+    "sendgrid": "^5.2.3"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10"
