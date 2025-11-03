@@ -2,6 +2,8 @@
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
 const token = require('../createJWT');
+const crypto = require('crypto');
+const { sendVerificationEmail, sendUsernameEmail, sendPasswordResetEmail } = require('../../cards/emailService');
 
 // Register a new user
 exports.register = async (req, res) => {
@@ -48,6 +50,10 @@ exports.register = async (req, res) => {
     const lastUser = await User.findOne().sort({ UserID: -1 }).lean();
     const nextUserId = lastUser ? lastUser.UserID + 1 : 1;
 
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
     // Create new user
     const newUser = new User({
       UserID: nextUserId,
@@ -57,6 +63,8 @@ exports.register = async (req, res) => {
       Email: email.toLowerCase(),
       Password: hashedPassword,
       IsVerified: false,
+      VerificationToken: verificationToken,
+      VerificationTokenExpires: verificationTokenExpires,
       CalorieGoal: 2000,
       ProteinGoal: 100,
       CarbsGoal: 100,
@@ -67,9 +75,19 @@ exports.register = async (req, res) => {
 
     await newUser.save();
 
+    // Send verification email
+    try {
+      console.log('🔵 Attempting to send verification email to:', email.toLowerCase());
+      await sendVerificationEmail(email.toLowerCase(), verificationToken, firstName);
+      console.log('✅ Verification email sent successfully!');
+    } catch (emailError) {
+      console.error('❌ Error sending verification email:', emailError);
+      // Continue anyway - user exists and can request resend
+    }
+
     return res.status(201).json({ 
       success: true, 
-      message: 'User registered successfully',
+      message: 'User registered successfully. Please check your email to verify your account.',
       userId: nextUserId 
     });
   } catch (e) {
@@ -102,6 +120,11 @@ exports.login = async (req, res) => {
     const isValidPassword = await bcrypt.compare(password, u.Password);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Username/Password incorrect' });
+    }
+
+
+    if (!u.IsVerified) {
+    return res.status(401).json({ error: 'Your Email not yet verified. Please check your inbox.' });
     }
 
     const id = u.UserID;
@@ -261,5 +284,208 @@ exports.editDayRolloverTime = async (req, res) => {
   } catch (e) {
     console.error(e);
     return res.status(500).json({ error: 'Server error updating day rollover time' });
+  }
+};
+
+// Verify email
+exports.verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Verification token is required'
+      });
+    }
+
+    const user = await User.findOne({
+      VerificationToken: token,
+      VerificationTokenExpires: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired verification token'
+      });
+    }
+
+    user.IsVerified = true;
+    user.VerificationToken = null;
+    user.VerificationTokenExpires = null;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Email verified successfully! You can now log in.'
+    });
+
+  } catch (error) {
+    console.error('Email verification error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error during email verification'
+    });
+  }
+};
+
+// Forgot username
+exports.forgotUsername = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    const user = await User.findOne({ Email: email.toLowerCase() });
+
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message: 'If that email exists, we will send you a username recovery email.'
+      });
+    }
+
+    try {
+      await sendUsernameEmail(user.Email, user.Username, user.FirstName);
+    } catch (emailError) {
+      console.error('Error sending username email:', emailError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send username email'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'If that email exists, we will send you a username recovery email.'
+    });
+
+  } catch (error) {
+    console.error('Forgot username error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error during username recovery'
+    });
+  }
+};
+
+// Forgot password
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email is required'
+      });
+    }
+
+    const user = await User.findOne({ Email: email.toLowerCase() });
+    if (!user) {
+      return res.status(200).json({
+        success: true,
+        message: 'If that email is in our system, we sent a password reset link.'
+      });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    user.ResetPasswordToken = resetToken;
+    user.ResetPasswordExpires = resetTokenExpires;
+    await user.save();
+
+    try {
+      await sendPasswordResetEmail(user.Email, resetToken, user.FirstName);
+    } catch (emailError) {
+      console.error('Error sending password reset email:', emailError);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to send password reset email'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'If that email exists, we will send you a password reset email.'
+    });
+
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error during password reset request'
+    });
+  }
+};
+
+// Reset password
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, newPassword, confirmPassword } = req.body;
+
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: 'Reset token is required'
+      });
+    }
+
+    if (!newPassword || !confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password and confirmation are required'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters'
+      });
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Passwords do not match'
+      });
+    }
+
+    const user = await User.findOne({
+      ResetPasswordToken: token,
+      ResetPasswordExpires: { $gt: new Date() }
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or expired password reset token'
+      });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    user.Password = hashedPassword;
+    user.ResetPasswordToken = null;
+    user.ResetPasswordExpires = null;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password has been reset successfully. You can now log in with your new password.'
+    });
+
+  } catch (error) {
+    console.error('Reset password error:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error during password reset'
+    });
   }
 };

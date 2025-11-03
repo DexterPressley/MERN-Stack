@@ -11,6 +11,7 @@ const UserSchema = new Schema({
   Password: { type: String, required: true },
   IsVerified: { type: Boolean, default: false },
   VerificationToken: { type: String, default: null },
+  VerificationTokenExpires: { type: Date, default: null },
   ResetPasswordToken: { type: String, default: null },
   ResetPasswordExpires: { type: Date, default: null },
   CalorieGoal: { type: Number, default: 2000 },
