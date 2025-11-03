@@ -3,10 +3,12 @@ require('express');
 require('mongodb');
 
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const token = require('./createJWT.js');
 const User = require('./models/user.js');
 const Food = require('./models/food.js');
 const Day = require('./models/day.js');
+const { sendVerificationEmail } = require('../emailService');
 
 exports.setApp = function (app, _mongoose) {
 
@@ -59,6 +61,9 @@ exports.setApp = function (app, _mongoose) {
       const lastUser = await User.findOne().sort({ UserID: -1 }).lean();
       const nextUserId = lastUser ? lastUser.UserID + 1 : 1;
 
+      const verificationToken = crypto.randomBytes(32).toString('hex');
+      const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+
       // Create new user
       const newUser = new User({
         UserID: nextUserId,
@@ -68,16 +73,24 @@ exports.setApp = function (app, _mongoose) {
         Email: email.toLowerCase(),
         Password: hashedPassword,
         IsVerified: false,
+        VerificationToken: verificationToken,
+        VerificationTokenExpires: verificationTokenExpires,
         CalorieGoal: 2000,
         DayRolloverTime: "00:00",
         CreatedAt: new Date()
       });
 
       await newUser.save();
+      try {
+        await sendVerificationEmail(email.toLowerCase(), verificationToken, firstName);
+      } catch (emailError) {
+        console.error('Error sending verification email:', emailError);
+        // Continue anyway - user exists and can request resend
+        }
 
       return res.status(201).json({ 
         success: true, 
-        message: 'User registered successfully',
+        message: 'User registered successfully. Please check your email to verify your account.',
         userId: nextUserId 
       });
     } catch (e) {
@@ -85,6 +98,52 @@ exports.setApp = function (app, _mongoose) {
       return res.status(500).json({ 
         success: false, 
         message: 'Server error during registration' 
+      });
+    }
+  });
+
+  // ----------------- /api/verify-email -----------------
+  // incoming: { token }
+  // outgoing: { success: boolean, message: string }
+  app.post('/api/verify-email', async (req, res) => {
+    try {
+      const { token } = req.body;
+      if (!token) {
+        return res.status(400).json({
+          success: false,
+          message: 'Verification token is required'
+        });
+      }
+
+      // Find user with this token AND token not expired
+      const user = await User.findOne({
+        VerificationToken: token,
+        VerificationTokenExpires: { $gt: new Date() }
+      });
+
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or expired verification token'
+        });
+      }
+
+      // Mark user as verified and clear token
+      user.IsVerified = true;
+      user.VerificationToken = null;
+      user.VerificationTokenExpires = null;
+      await user.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Email verified successfully! You can now log in.'
+      });
+
+    } catch (error) {
+      console.error('Email verification error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Server error during email verification'
       });
     }
   });
@@ -114,6 +173,10 @@ exports.setApp = function (app, _mongoose) {
         return res.status(200).json({ error: 'Username/Password incorrect' });
       }
 
+      if(!u.IsVerified) {
+        return res.status(200).json({ error: 'Your Email not yet verified. Please check your inbox.' });
+      }
+
       const id = u.UserID;
       const fn = u.FirstName;
       const ln = u.LastName;
@@ -127,6 +190,178 @@ exports.setApp = function (app, _mongoose) {
     } catch (err) {
       console.error(err);
       return res.status(500).json({ error: 'server error' });
+    }
+  });
+
+  // ------------------ /api/forgot-username ------------------
+  // incoming: { email }
+  // outgoing: { success: boolean, message: string }
+  app.post('/api/forgot-username', async (req, res) => {
+    try {
+      const { email } = req.body;
+
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email is required'
+        });
+      }
+
+      const user = await User.findOne({ Email: email.toLowerCase() });
+
+      // If no user found, return generic message (don't reveal if email exists)
+      if (!user) {
+        return res.status(200).json({
+          success: true,
+          message: 'If that email exists, we will send you a username recovery email.'
+        });
+      }
+
+      // Send username email
+      try {
+        const { sendUsernameEmail } = require('../emailService');
+        await sendUsernameEmail(user.Email, user.Username, user.FirstName);
+      } catch (emailError) {
+        console.error('Error sending username email:', emailError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to send username email'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'If that email exists, we will send you a username recovery email.'
+      });
+
+    } catch (error) {
+      console.error('Forgot username error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Server error during username recovery'
+      });
+    }
+  });
+
+  // ---------------- /api/forgot-password ----------------
+  // incoming: { email }
+  // outgoing: { success: boolean, message: string }
+  app.post('/api/forgot-password', async (req, res) => {
+    try {
+      const { email } = req.body;
+      if (!email) {
+        return res.status(400).json({
+          success: false,
+          message: 'Email is required'
+        });
+      }
+
+      const user = await User.findOne({ Email: email.toLowerCase() });
+      if (!user) {
+        return res.status(200).json({
+          success: true,
+          message: 'If that email is in our system, we sent a password reset link.'
+        });
+      }
+
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+      user.ResetPasswordToken = resetToken;
+      user.ResetPasswordExpires = resetTokenExpires;
+      await user.save();
+
+      // Send email
+      try {
+        const { sendPasswordResetEmail } = require('../emailService');
+        await sendPasswordResetEmail(user.Email, resetToken, user.FirstName);
+      } catch (emailError) {
+        console.error('Error sending password reset email:', emailError);
+        return res.status(500).json({
+          success: false,
+          message: 'Failed to send password reset email'
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: 'If that email is in our system, we sent a password reset link.'
+      });
+
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Server error during password reset request'
+      });
+    }
+  });
+
+  // ------------------ /api/reset-password ------------------
+  // incoming: { token, newPassword, confirmPassword }
+  // outgoing: { success: boolean, message: string }
+  app.post('/api/reset-password', async (req, res) => {
+    try {
+      const { token, newPassword, confirmPassword } = req.body;
+
+      if (!token) {
+        return res.status(400).json({
+          success: false,
+          message: 'Reset token is required'
+        });
+      }
+
+      if (!newPassword || !confirmPassword) {
+        return res.status(400).json({
+          success: false,
+          message: 'New password and confirmation are required'
+        });
+      }
+
+      if (newPassword.length < 6) {
+        return res.status(400).json({
+          success: false,
+          message: 'Password must be at least 6 characters'
+        });
+      }
+
+      if (newPassword !== confirmPassword) {
+        return res.status(400).json({
+          success: false,
+          message: 'Passwords do not match'
+        });
+      }
+
+      const user = await User.findOne({
+        ResetPasswordToken: token,
+        ResetPasswordExpires: { $gt: new Date() }
+      });
+
+      if (!user) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid or expired password reset token'
+        });
+      }
+
+      const salt = await bcrypt.genSalt(10);
+      const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+      user.Password = hashedPassword;
+      user.ResetPasswordToken = null;
+      user.ResetPasswordExpires = null;
+      await user.save();
+
+      return res.status(200).json({
+        success: true,
+        message: 'Password has been reset successfully. You can now log in with your new password.'
+      });
+
+    } catch (error) {
+      console.error('Reset password error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Server error during password reset'
+      });
     }
   });
 
