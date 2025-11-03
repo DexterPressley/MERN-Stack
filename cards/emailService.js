@@ -8,7 +8,7 @@ exports.sendVerificationEmail = async(email, token, firstName) => {
     const verificationUrl = `${process.env.APP_URL}/verify-email?token=${token}`;
     const msg = {
         to: email,
-        from: 'noreply@sendgrid.net',
+        from: `CalZone <${process.env.EMAIL_USER}>`,
         subject: 'Verify Your Email - CalZone',
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #fafafa;">
@@ -38,24 +38,21 @@ exports.sendVerificationEmail = async(email, token, firstName) => {
         text: `Welcome to CalZone!\n\nPlease verify your email by visiting:\n${verificationUrl}\n\nThis link expires in 24 hours.\n\nIf you didn't create this account, you can ignore this email.`
     };
 
-try {
-    await sgMail.send(msg);
-    console.log(`✅ Verification email sent to ${email}`);
-    return true;
-} catch (error) {
-    console.error('❌ Error sending verification email:', error);
-    if (error.response && error.response.body && error.response.body.errors) {
-        console.error('SendGrid Error Details:', JSON.stringify(error.response.body.errors, null, 2));
+    try {
+        await sgMail.send(msg);
+        console.log(`✅ Verification email sent to ${email}`);
+        return true;
+    } catch (error) {
+        console.error('❌ Error sending verification email:', error);
+        throw error;
     }
-    throw error;
-}
 };
 
 // Username recovery
 exports.sendUsernameEmail = async (email, username, firstName) => {
     const msg = {
         to: email,
-        from: 'noreply@sendgrid.net',
+        from: `CalZone <${process.env.EMAIL_USER}>`,
         subject: 'Your Username - CalZone',
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #fafafa;">
@@ -82,17 +79,14 @@ exports.sendUsernameEmail = async (email, username, firstName) => {
         text: `Your username is: ${username}\n\nYou can use this to log in to your CalZone account.\n\nIf you didn't make this request, you can ignore this email.`
     };
 
-try {
-    await sgMail.send(msg);
-    console.log(`✅ Username recovery email sent to ${email}`);
-    return true;
-} catch (error) {
-    console.error('❌ Error sending username recovery email:', error);
-    if (error.response && error.response.body && error.response.body.errors) {
-        console.error('SendGrid Error Details:', JSON.stringify(error.response.body.errors, null, 2));
+    try {
+        await sgMail.send(msg);
+        console.log(`✅ Username recovery email sent to ${email}`);
+        return true;
+    } catch (error) {
+        console.error('❌ Error sending username email:', error);
+        throw error;
     }
-    throw error;
-}
 };
 
 // Password reset email
@@ -101,7 +95,7 @@ exports.sendPasswordResetEmail = async (email, token, firstName) => {
     
     const msg = {
         to: email,
-        from: 'noreply@sendgrid.net',
+        from: `CalZone <${process.env.EMAIL_USER}>`,
         subject: 'Reset Your Password - CalZone',
         html: `
             <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 40px 20px; background-color: #fafafa;">
@@ -137,9 +131,6 @@ exports.sendPasswordResetEmail = async (email, token, firstName) => {
         return true;
     } catch (error) {
         console.error('❌ Error sending password reset email:', error);
-        if (error.response && error.response.body && error.response.body.errors) {
-            console.error('SendGrid Error Details:', JSON.stringify(error.response.body.errors, null, 2));
-        }
         throw error;
     }
 };
