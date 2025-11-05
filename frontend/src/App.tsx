@@ -1,17 +1,20 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import DashboardPage from "./pages/DashboardPage";
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import './App.css';
+import LoginPage from './pages/LoginPage';
+import CardPage from './pages/CardPage';
+import RegisterPage from './pages/RegisterPage';
 
-function Home() {
-  return <h1 style={{ padding: 24 }}>Home renders</h1>;
-}
-
-export default function App() {
+function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/dashboard" element={<DashboardPage />} />
-        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/" element={<LoginPage />} />
+        <Route path="/cards" element={<CardPage />} />
+        <Route path="/register" element={<RegisterPage />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
+export default App;
+

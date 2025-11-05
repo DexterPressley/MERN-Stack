@@ -1,17 +1,13 @@
 name: Deploy MERN (droplet)
-
 on:
   push:
     branches: [ main ]
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -20,16 +16,13 @@ jobs:
           cache-dependency-path: |
             package-lock.json
             frontend/package-lock.json
-
       # --- Build frontend in CI ---
       - name: Install frontend deps
         working-directory: ./frontend
         run: npm ci
-
       - name: Build frontend
         working-directory: ./frontend
         run: npm run build
-
       # --- Ensure target directories exist on server (idempotent) ---
       - name: Prepare folders on server
         uses: appleboy/ssh-action@v1.0.3
@@ -44,7 +37,6 @@ jobs:
             if [ ! -d /home/app/mern/.git ]; then
               echo "WARNING: /home/app/mern doesn't look like a git repo."
             fi
-
       # --- Upload ONLY the built frontend to the correct folder ---
       - name: Upload frontend dist
         uses: appleboy/scp-action@v0.1.7
@@ -53,11 +45,11 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           port: ${{ secrets.SERVER_PORT }}
           password: ${{ secrets.SERVER_PASSWORD }}
-          source: "frontend/dist/**"
-          target: "/home/app/mern/frontend/dist"
+          source: "frontend/dist/*"
+          target: "/home/app/mern/frontend/"
           strip_components: 1
           overwrite: true
-
+          rm: true
       # --- Update backend from git and restart PM2 ---
       - name: Update backend & restart
         uses: appleboy/ssh-action@v1.0.3
@@ -73,7 +65,5 @@ jobs:
             npm ci --omit=dev
             pm2 restart mern-api --update-env
             # nginx -t && systemctl reload nginx
-
       - name: Done
         run: echo "✅ Deployed to ${{ secrets.SERVER_HOST }}"
-

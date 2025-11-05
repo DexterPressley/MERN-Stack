@@ -1,10 +1,8 @@
-import React, { useState } from "react";
-import axios from "axios";
-import { buildPath } from "./Path";
-import { jwtDecode } from "jwt-decode";
-
-const TOKEN_KEY = "token_data";
-function storeToken(val: string) { try { localStorage.setItem(TOKEN_KEY, val); } catch {} }
+import React, { useState } from 'react';
+import axios from 'axios';
+import { buildPath } from './Path';
+import { storeToken } from '../tokenStorage';
+import { jwtDecode } from 'jwt-decode';
 
 type TokenPayload = {
   userId: number;
@@ -14,136 +12,117 @@ type TokenPayload = {
   exp?: number;
 };
 
-// set to true if you want to always skip the server during demo
-const DEMO = false;
+function Login() {
+  const [message, setMessage] = useState('');
+  const [loginName, setLoginName] = useState('');
+  const [loginPassword, setPassword] = useState('');
 
-export default function Login() {
-  const [message, setMessage] = useState("");
-  const [loginName, setLoginName] = useState("");
-  const [loginPassword, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
+  function handleSetLoginName(e: React.ChangeEvent<HTMLInputElement>) {
+    setLoginName(e.target.value);
+  }
+  function handleSetPassword(e: React.ChangeEvent<HTMLInputElement>) {
+    setPassword(e.target.value);
+  }
 
-  async function doRealLogin(): Promise<boolean> {
+  async function doLogin(
+    event: React.MouseEvent<HTMLInputElement, MouseEvent>
+  ): Promise<void> {
+    event.preventDefault();
+
     try {
       const { data: res } = await axios.post(
-        buildPath("api/login"),
+        buildPath('api/login'),
         { username: loginName, password: loginPassword },
-        { headers: { "Content-Type": "application/json" } }
+        { headers: { 'Content-Type': 'application/json' } }
       );
 
+      // expecting either { accessToken } or { error }
       if (res?.error) {
-        setMessage("Invalid username or password");
-        return false;
+        setMessage('User/Password combination incorrect');
+        return;
       }
 
       const accessToken: string | undefined = res?.accessToken;
       if (!accessToken) {
-        setMessage("Unexpected server response (no access token)");
-        return false;
+        setMessage('Unexpected server response (no access token).');
+        return;
       }
 
-      storeToken(accessToken);
+      // store token (our helper accepts { accessToken })
+      storeToken({ accessToken });
+
+      // decode payload
       const payload = jwtDecode<TokenPayload>(accessToken);
-      if (!payload.userId) return false;
+      const userId = payload.userId;
+      const firstName = payload.firstName;
+      const lastName = payload.lastName;
 
-      localStorage.setItem("user_data", JSON.stringify({
-        id: payload.userId, userId: payload.userId,
-        firstName: payload.firstName, lastName: payload.lastName
-      }));
+      if (!userId || userId <= 0) {
+        setMessage('User/Password combination incorrect');
+        return;
+      }
 
-      return true;
-    } catch {
-      return false;
+      // save both keys for compatibility (id + userId)
+      const user = { firstName, lastName, id: userId, userId };
+      localStorage.setItem('user_data', JSON.stringify(user));
+
+      setMessage('');
+      window.location.href = '/cards';
+    } catch (err: any) {
+      console.error(err);
+      if (err.response && err.response.data && err.response.data.error) {
+        setMessage(err.response.data.error);
+      } else {
+        setMessage('Network or server error logging in.');
+      }
     }
+
   }
 
-  function doDemoLogin(): boolean {
-    const ok = loginName.trim().toLowerCase() === "demo" &&
-               (loginPassword.trim() === "demo" || loginPassword.trim() === "password");
-    if (!ok && !DEMO) {
-      setMessage("Server not reachable. Use demo/demo to preview, or enable DEMO in code.");
-      return false;
-    }
-    const fake = {
-      userId: 1, firstName: "Demo", lastName: "User",
-      iat: Math.floor(Date.now()/1000),
-      exp: Math.floor(Date.now()/1000) + 3600
-    };
-    const fakeToken = btoa(JSON.stringify(fake));
-    storeToken(fakeToken);
-    localStorage.setItem("user_data", JSON.stringify({
-      id: fake.userId, userId: fake.userId, firstName: fake.firstName, lastName: fake.lastName
-    }));
-    return true;
+  function goToRegister() {
+    window.location.href = '/register';
   }
-
-  async function doLogin(e: React.FormEvent) {
-    e.preventDefault();
-    if (!loginName || !loginPassword) {
-      setMessage("Please enter username and password");
-      return;
-    }
-    setLoading(true);
-    setMessage("Checking credentials…");
-
-    if (DEMO) {
-      const ok = doDemoLogin();
-      setLoading(false);
-      if (ok) window.location.href = "/dashboard";
-      return;
-    }
-
-    const ok = await doRealLogin();
-    setLoading(false);
-
-    if (ok) {
-      setMessage("");
-      window.location.href = "/dashboard";
-      return;
-    }
-
-    const fallback = doDemoLogin();
-    if (fallback) {
-      setMessage("Server unreachable — using demo account.");
-      window.location.href = "/dashboard";
-    }
-  }
-
-  function goToRegister() { window.location.href = "/register"; }
 
   return (
-    <div className="layout center">
-      <div className="card login-card" style={{ maxWidth: 480 }}>
-        <h1 className="title">Sign In</h1>
-        <p className="muted">Tip: use <code>demo / demo</code> to preview without a server.</p>
-
-        <form onSubmit={doLogin} className="form-grid">
-          <label>
-            Username
-            <input className="input" value={loginName} onChange={(e)=>setLoginName(e.target.value)}
-                   autoComplete="username" placeholder="Enter your username" />
-          </label>
-
-          <label>
-            Password
-            <input className="input" type="password" value={loginPassword}
-                   onChange={(e)=>setPassword(e.target.value)}
-                   autoComplete="current-password" placeholder="Enter your password" />
-          </label>
-
-          <button type="submit" className="primary full" disabled={loading}>
-            {loading ? "Signing in…" : "Log In"}
-          </button>
-
-          <div id="loginResult" className="muted center-text" style={{ minHeight: 20 }}>{message}</div>
-        </form>
-
-        <hr />
-        <div className="center-text">
-          <p className="muted">New user?</p>
-          <button type="button" className="secondary" onClick={goToRegister}>Sign Up Now!</button>
-        </div>
-      </div>
+    <div id="loginDiv">
+      <span id="inner-title">PLEASE LOG IN</span><br />
+      Username:{' '}
+      <input
+        type="text"
+        id="loginName"
+        placeholder="Username"
+        onChange={handleSetLoginName}
+      />
+      <br />
+      Password:{' '}
+      <input
+        type="password"
+        id="loginPassword"
+        placeholder="Password"
+        onChange={handleSetPassword}
+      />
+      <br />
+      <input
+        type="submit"
+        id="loginButton"
+        className="buttons"
+        value="Do It"
+        onClick={doLogin}
+      />
+      <span id="loginResult">{message}</span>
+      <br /><br />
+      <span id="newUserText">New User?</span><br />
+      <button
+        type="button"
+        id="signUpButton"
+        className="buttons"
+        onClick={goToRegister}
+      >
+        Sign Up Now!
+      </button>
     </div>
   );
 }
+
+export default Login;
+
