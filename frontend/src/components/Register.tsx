@@ -57,20 +57,11 @@ function Register() {
                 // Store user data temporarily (they'll need to log in, or we auto-log them in)
                 setMessage('Registration successful! Redirecting...');
 
-                // Store user data in localStorage
-                const userId = res?.userId;
-                const user = {
-                    firstName,
-                    lastName,
-                    id: userId,
-                    userId
-                };
-                localStorage.setItem('user_data', JSON.stringify(user));
 
                 // Redirect to logged in page after short delay
                 setTimeout(() => {
                     window.location.href = '/cards';
-                }, 1000);
+                }, 1500);
             } else {
                 setMessage(res?.message || 'Registration failed');
             }
