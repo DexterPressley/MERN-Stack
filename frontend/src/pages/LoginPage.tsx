@@ -4,7 +4,7 @@ import Login from '../components/Login.tsx';
 const LoginPage = () =>
 {
   return(
-    <div>
+    <div className="content-box">
       <PageTitle />
       <Login />
     </div>

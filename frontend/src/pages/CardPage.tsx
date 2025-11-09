@@ -4,7 +4,7 @@ import CardUI from '../components/CardUI';
 
 const CardPage = () => {
   return (
-    <div>
+    <div className="content-box">
       <PageTitle />
       <LoggedInName />
       <CardUI />
