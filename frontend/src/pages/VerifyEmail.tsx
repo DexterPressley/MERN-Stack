@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { buildPath } from '../Path';
+import { buildPath } from '../components/Path';
 
 function VerifyEmail() {
   const [searchParams] = useSearchParams();
@@ -101,13 +101,13 @@ const styles = {
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: '100vh',
-    backgroundColor: '#f5f5f5',
+    backgroundColor: 'transparent',
     padding: '20px'
   } as React.CSSProperties,
   card: {
     backgroundColor: 'white',
     borderRadius: '8px',
-    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+    boxShadow: 'none',
     padding: '40px',
     maxWidth: '400px',
     width: '100%',
