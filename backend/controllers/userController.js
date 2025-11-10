@@ -52,7 +52,7 @@ exports.register = async (req, res) => {
 
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
-    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 hours
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000 * 30); // 30 days
 
     // Create new user
     const newUser = new User({
@@ -394,7 +394,7 @@ exports.forgotPassword = async (req, res) => {
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 24 * 30 * 1000); // 30 days
     user.ResetPasswordToken = resetToken;
     user.ResetPasswordExpires = resetTokenExpires;
     await user.save();
