@@ -11,33 +11,58 @@ function Register() {
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
 
+    // Individual error states for each field
+    const [firstNameError, setFirstNameError] = useState('');
+    const [lastNameError, setLastNameError] = useState('');
+    const [usernameError, setUsernameError] = useState('');
+    const [emailError, setEmailError] = useState('');
+    const [passwordError, setPasswordError] = useState('');
+    const [confirmPasswordError, setConfirmPasswordError] = useState('');
+
     function handleSetFirstName(e: React.ChangeEvent<HTMLInputElement>) {
         setFirstName(e.target.value);
+        setFirstNameError(''); // Clear error on input
     }
 
     function handleSetLastName(e: React.ChangeEvent<HTMLInputElement>) {
         setLastName(e.target.value);
+        setLastNameError(''); // Clear error on input
     }
 
     function handleSetUsername(e: React.ChangeEvent<HTMLInputElement>) {
         setUsername(e.target.value);
+        setUsernameError(''); // Clear error on input
     }
 
     function handleSetEmail(e: React.ChangeEvent<HTMLInputElement>) {
         setEmail(e.target.value);
+        setEmailError(''); // Clear error on input
     }
 
     function handleSetPassword(e: React.ChangeEvent<HTMLInputElement>) {
         setPassword(e.target.value);
+        setPasswordError(''); // Clear error on input
     }
 
     function handleSetConfirmPassword(e: React.ChangeEvent<HTMLInputElement>) {
         setConfirmPassword(e.target.value);
+        setConfirmPasswordError(''); // Clear error on input
     }
 
-    // Email validation function 
+    // Email validation function
     function isEmail(str: string): boolean {
         return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
+    }
+
+    // Clear all errors
+    function clearAllErrors() {
+        setFirstNameError('');
+        setLastNameError('');
+        setUsernameError('');
+        setEmailError('');
+        setPasswordError('');
+        setConfirmPasswordError('');
+        setMessage('');
     }
 
     async function doRegister(
@@ -45,60 +70,61 @@ function Register() {
     ): Promise<void> {
         event.preventDefault();
 
-        // Clear previous message
-        setMessage('');
+        // Clear all previous errors
+        clearAllErrors();
+
+        let valid = true;
 
         // Validate First Name (required, cannot be empty/whitespace)
         if (!firstName || firstName.trim() === '') {
-            setMessage('First name is required');
-            return;
+            setFirstNameError('First name is required');
+            valid = false;
         }
 
         // Validate Last Name (required, cannot be empty/whitespace)
         if (!lastName || lastName.trim() === '') {
-            setMessage('Last name is required');
-            return;
+            setLastNameError('Last name is required');
+            valid = false;
         }
 
         // Validate Username (required, cannot be empty/whitespace)
         if (!username || username.trim() === '') {
-            setMessage('Username is required');
-            return;
+            setUsernameError('Username is required');
+            valid = false;
         }
 
         // Validate Email (required, cannot be empty/whitespace)
         if (!email || email.trim() === '') {
-            setMessage('Email is required');
-            return;
-        }
-
-        // Validate Email format
-        if (!isEmail(email.trim())) {
-            setMessage('Invalid email format');
-            return;
+            setEmailError('Email is required');
+            valid = false;
+        } else if (!isEmail(email.trim())) {
+            // Validate Email format
+            setEmailError('Invalid email format');
+            valid = false;
         }
 
         // Validate Password (required, cannot be empty/whitespace)
         if (!password || password.trim() === '') {
-            setMessage('Password is required');
-            return;
-        }
-
-        // Validate Password minimum length
-        if (password.length < 6) {
-            setMessage('Password must be at least 6 characters');
-            return;
+            setPasswordError('Password is required');
+            valid = false;
+        } else if (password.length < 6) {
+            // Validate Password minimum length
+            setPasswordError('Password must be at least 6 characters');
+            valid = false;
         }
 
         // Validate Confirm Password (required)
         if (!confirmPassword || confirmPassword.trim() === '') {
-            setMessage('Please confirm your password');
-            return;
+            setConfirmPasswordError('Please confirm your password');
+            valid = false;
+        } else if (password !== confirmPassword) {
+            // Check if passwords match
+            setConfirmPasswordError('Passwords do not match');
+            valid = false;
         }
 
-        // Check if passwords match
-        if (password !== confirmPassword) {
-            setMessage('Passwords do not match');
+        // If validation failed, stop here
+        if (!valid) {
             return;
         }
 
@@ -129,7 +155,7 @@ function Register() {
                 );
 
                 if (loginRes?.id && loginRes.id > 0) {
-                    // Store user data in localStorage 
+                    // Store user data in localStorage
                     const userData = {
                         id: loginRes.id,
                         firstName: loginRes.firstName || firstName,
@@ -177,72 +203,82 @@ function Register() {
     }
 
     return (
-        <div className="content-box">
-            <div id="registerDiv">
-                <span id="inner-title">CREATE AN ACCOUNT</span><br />
-                First Name:{' '}
-                <input
-                    type="text"
-                    id="firstName"
-                    placeholder="First Name"
-                    value={firstName}
-                    onChange={handleSetFirstName}
-                />
-                <br />
-                Last Name:{' '}
-                <input
-                    type="text"
-                    id="lastName"
-                    placeholder="Last Name"
-                    value={lastName}
-                    onChange={handleSetLastName}
-                />
-                <br />
-                Username:{' '}
-                <input
-                    type="text"
-                    id="username"
-                    placeholder="Username"
-                    value={username}
-                    onChange={handleSetUsername}
-                />
-                <br />
-                Email:{' '}
-                <input
-                    type="email"
-                    id="email"
-                    placeholder="Email"
-                    value={email}
-                    onChange={handleSetEmail}
-                />
-                <br />
-                Password:{' '}
-                <input
-                    type="password"
-                    id="password"
-                    placeholder="Password"
-                    value={password}
-                    onChange={handleSetPassword}
-                />
-                <br />
-                Confirm Password:{' '}
-                <input
-                    type="password"
-                    id="confirmPassword"
-                    placeholder="Confirm Password"
-                    value={confirmPassword}
-                    onChange={handleSetConfirmPassword}
-                />
-                <br />
-                <input
-                    type="submit"
-                    id="registerButton"
-                    className="buttons"
-                    value="Sign Up"
-                    onClick={doRegister}
-                />
-                <span id="registerResult">{message}</span>
-            </div>
+        <div id="registerDiv">
+            <span id="inner-title">CREATE AN ACCOUNT</span><br />
+            First Name:{' '}
+            <input
+                type="text"
+                id="firstName"
+                placeholder="First Name"
+                value={firstName}
+                onChange={handleSetFirstName}
+                aria-invalid={firstNameError ? 'true' : 'false'}
+            />
+            {firstNameError && <div className="error">{firstNameError}</div>}
+            <br />
+            Last Name:{' '}
+            <input
+                type="text"
+                id="lastName"
+                placeholder="Last Name"
+                value={lastName}
+                onChange={handleSetLastName}
+                aria-invalid={lastNameError ? 'true' : 'false'}
+            />
+            {lastNameError && <div className="error">{lastNameError}</div>}
+            <br />
+            Username:{' '}
+            <input
+                type="text"
+                id="username"
+                placeholder="Username"
+                value={username}
+                onChange={handleSetUsername}
+                aria-invalid={usernameError ? 'true' : 'false'}
+            />
+            {usernameError && <div className="error">{usernameError}</div>}
+            <br />
+            Email:{' '}
+            <input
+                type="email"
+                id="email"
+                placeholder="Email"
+                value={email}
+                onChange={handleSetEmail}
+                aria-invalid={emailError ? 'true' : 'false'}
+            />
+            {emailError && <div className="error">{emailError}</div>}
+            <br />
+            Password:{' '}
+            <input
+                type="password"
+                id="password"
+                placeholder="Password"
+                value={password}
+                onChange={handleSetPassword}
+                aria-invalid={passwordError ? 'true' : 'false'}
+            />
+            {passwordError && <div className="error">{passwordError}</div>}
+            <br />
+            Confirm Password:{' '}
+            <input
+                type="password"
+                id="confirmPassword"
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChange={handleSetConfirmPassword}
+                aria-invalid={confirmPasswordError ? 'true' : 'false'}
+            />
+            {confirmPasswordError && <div className="error">{confirmPasswordError}</div>}
+            <br />
+            <input
+                type="submit"
+                id="registerButton"
+                className="buttons"
+                value="Sign Up"
+                onClick={doRegister}
+            />
+            <span id="registerResult">{message}</span>
         </div>
     );
 }
