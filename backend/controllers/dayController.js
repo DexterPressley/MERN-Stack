@@ -1,5 +1,6 @@
 // backend/controllers/dayController.js
 const Day = require('../models/day');
+const Food = require('../models/food');
 
 // Get days (with optional date range filtering)
 exports.getDays = async (req, res) => {
@@ -32,6 +33,41 @@ exports.getDays = async (req, res) => {
       .sort({ Date: -1 })
       .lean();
 
+    // ⚠️ CRITICAL: Enrich entries with food details
+    for (let day of days) {
+      if (day.Entries && day.Entries.length > 0) {
+        for (let entry of day.Entries) {
+          const food = await Food.findOne({ 
+            FoodID: entry.FoodID, 
+            UserID: parseInt(userId) 
+          }).lean();
+          
+          if (food) {
+            // Add food details to entry
+            entry.foodName = food.Name;
+            entry.caloriesPerUnit = food.CaloriesPerUnit;
+            entry.proteinPerUnit = food.ProteinPerUnit;
+            entry.carbsPerUnit = food.CarbsPerUnit;
+            entry.fatPerUnit = food.FatPerUnit;
+            entry.unit = food.Unit;
+            
+            // Calculate totals based on amount
+            entry.calories = Math.round(food.CaloriesPerUnit * entry.Amount);
+            entry.protein = Math.round(food.ProteinPerUnit * entry.Amount);
+            entry.carbs = Math.round(food.CarbsPerUnit * entry.Amount);
+            entry.fat = Math.round(food.FatPerUnit * entry.Amount);
+          } else {
+            // Food not found, set defaults
+            entry.foodName = 'Unknown Food';
+            entry.calories = 0;
+            entry.protein = 0;
+            entry.carbs = 0;
+            entry.fat = 0;
+          }
+        }
+      }
+    }
+
     return res.status(200).json({ 
       success: true,
       results: days,
@@ -57,6 +93,35 @@ exports.getDayById = async (req, res) => {
 
     if (!day) {
       return res.status(404).json({ error: 'Day not found or does not belong to user' });
+    }
+
+    // ⚠️ CRITICAL: Enrich entries with food details
+    if (day.Entries && day.Entries.length > 0) {
+      for (let entry of day.Entries) {
+        const food = await Food.findOne({ 
+          FoodID: entry.FoodID, 
+          UserID: parseInt(userId) 
+        }).lean();
+        
+        if (food) {
+          entry.foodName = food.Name;
+          entry.caloriesPerUnit = food.CaloriesPerUnit;
+          entry.proteinPerUnit = food.ProteinPerUnit;
+          entry.carbsPerUnit = food.CarbsPerUnit;
+          entry.fatPerUnit = food.FatPerUnit;
+          entry.unit = food.Unit;
+          entry.calories = Math.round(food.CaloriesPerUnit * entry.Amount);
+          entry.protein = Math.round(food.ProteinPerUnit * entry.Amount);
+          entry.carbs = Math.round(food.CarbsPerUnit * entry.Amount);
+          entry.fat = Math.round(food.FatPerUnit * entry.Amount);
+        } else {
+          entry.foodName = 'Unknown Food';
+          entry.calories = 0;
+          entry.protein = 0;
+          entry.carbs = 0;
+          entry.fat = 0;
+        }
+      }
     }
 
     return res.status(200).json({ 
