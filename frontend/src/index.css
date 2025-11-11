@@ -165,7 +165,7 @@ input:focus, textarea:focus {
 #registerDiv input[type="email"],
 #registerDiv input[type="password"] {
   padding: 10px 12px;
-  border: 2px solid var(--border);
+  border: 2px solid rgb(79, 62, 45);
   border-radius: 8px;
   font-size: 16px;
   font-family: var(--font);
@@ -186,9 +186,9 @@ input:focus, textarea:focus {
 }
 
 /* Green border for valid inputs */
-#registerDiv input[aria-invalid="false"] {
+/* #registerDiv input[aria-invalid="false"] {
   border: 2px solid #2ecc71;
-}
+} */
 
 /* RED ERROR TEXT under inputs */
 #registerDiv .error {
@@ -243,6 +243,41 @@ input:focus, textarea:focus {
   color: #e74c3c;
 }
 
+/* Header row with title and back button */
+#registerDiv .header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+#registerDiv .header-row #inner-title {
+  margin: 0;
+  flex: 1;
+}
+
+#registerDiv .btn-back {
+  padding: 8px 16px;
+  background-color: #2d5016; /* Forest green */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: var(--font);
+  white-space: nowrap;
+}
+
+#registerDiv .btn-back:hover {
+  background-color: #3d6b1f;
+}
+
+#registerDiv .btn-back:active {
+  transform: translateY(1px);
+}
+
 /* ============================
    Login Page Styling
 ============================ */
@@ -289,7 +324,7 @@ input:focus, textarea:focus {
 #loginDiv input[type="text"],
 #loginDiv input[type="password"] {
   padding: 10px 12px;
-  border: 2px solid var(--border);
+  border: 2px solid rgb(79, 62, 45);
   border-radius: 8px;
   font-size: 16px;
   font-family: var(--font);

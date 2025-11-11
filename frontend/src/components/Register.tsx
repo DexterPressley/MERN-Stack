@@ -204,7 +204,16 @@ function Register() {
 
     return (
         <div id="registerDiv">
-            <span id="inner-title">Register New Account</span>
+            <div className="header-row">
+                <span id="inner-title">Register New Account</span>
+                <button
+                    type="button"
+                    className="btn btn-back"
+                    onClick={() => window.location.href = '/'}
+                >
+                    Back
+                </button>
+            </div>
 
             <label htmlFor="firstName">First Name</label>
             <input
