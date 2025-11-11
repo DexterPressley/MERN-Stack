@@ -309,9 +309,9 @@ input:focus, textarea:focus {
 }
 
 /* Green border for valid inputs */
-#loginDiv input[aria-invalid="false"] {
+/* #loginDiv input[aria-invalid="false"] {
   border: 2px solid #2ecc71;
-}
+} */
 
 /* RED ERROR TEXT under inputs */
 #loginDiv .error {
