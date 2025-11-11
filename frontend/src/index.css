@@ -234,11 +234,161 @@ input:focus, textarea:focus {
 }
 
 /* Success message in green */
-#registerResult.success {
+/* #registerResult.success {
   color: #2ecc71;
-}
+} */
 
 /* Error message in red */
 #registerResult.error {
   color: #e74c3c;
+}
+
+/* ============================
+   Login Page Styling
+============================ */
+
+/* Login container styling */
+#loginDiv {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Title styling */
+#loginDiv #inner-title {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+/* Form layout - stack labels and inputs vertically */
+#loginDiv > br {
+  display: none; /* Hide the <br> tags */
+}
+
+#loginDiv label,
+#loginDiv input[type="text"],
+#loginDiv input[type="password"] {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+/* Label styling */
+#loginDiv label {
+  font-weight: 600;
+  color: var(--muted);
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+/* Input styling */
+#loginDiv input[type="text"],
+#loginDiv input[type="password"] {
+  padding: 10px 12px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: var(--font);
+  transition: border-color 0.2s ease;
+  background: white;
+}
+
+#loginDiv input[type="text"]:focus,
+#loginDiv input[type="password"]:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
+/* RED BORDER for invalid inputs */
+#loginDiv input[aria-invalid="true"] {
+  border: 2px solid #e74c3c !important;
+}
+
+/* Green border for valid inputs */
+#loginDiv input[aria-invalid="false"] {
+  border: 2px solid #2ecc71;
+}
+
+/* RED ERROR TEXT under inputs */
+#loginDiv .error {
+  color: #e74c3c;
+  font-size: 0.9em;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  font-family: var(--font);
+  display: block;
+}
+
+/* Login button - match forest green background */
+#loginButton {
+  width: 100%;
+  padding: 12px;
+  margin-top: 20px;
+  background-color: #2d5016; /* Forest green */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: var(--font);
+}
+
+#loginButton:hover {
+  background-color: #3d6b1f;
+}
+
+#loginButton:active {
+  transform: translateY(1px);
+}
+
+/* Result message below button */
+#loginResult {
+  display: block;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 0.95rem;
+  color: #e74c3c;
+}
+
+/* New User Section */
+#newUserSection {
+  text-align: center;
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+#newUserText {
+  display: block;
+  font-size: 1rem;
+  color: var(--muted);
+  margin-bottom: 12px;
+}
+
+#signUpButton {
+  width: 100%;
+  padding: 12px;
+  background-color: #2d5016; /* Forest green */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: var(--font);
+}
+
+#signUpButton:hover {
+  background-color: #3d6b1f;
+}
+
+#signUpButton:active {
+  transform: translateY(1px);
 }

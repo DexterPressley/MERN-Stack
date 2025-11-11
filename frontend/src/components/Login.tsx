@@ -17,17 +17,54 @@ function Login() {
   const [loginName, setLoginName] = useState('');
   const [loginPassword, setPassword] = useState('');
 
+  // Individual error states for each field
+  const [loginNameError, setLoginNameError] = useState('');
+  const [loginPasswordError, setLoginPasswordError] = useState('');
+
+
   function handleSetLoginName(e: React.ChangeEvent<HTMLInputElement>) {
     setLoginName(e.target.value);
+    setLoginNameError(''); // Clear error on input
   }
+
   function handleSetPassword(e: React.ChangeEvent<HTMLInputElement>) {
     setPassword(e.target.value);
+    setLoginPasswordError(''); // Clear error on input
+  }
+
+  // Clear all errors
+  function clearAllErrors() {
+    setLoginNameError('');
+    setLoginPasswordError('');
+    setMessage('');
   }
 
   async function doLogin(
     event: React.MouseEvent<HTMLInputElement, MouseEvent>
   ): Promise<void> {
     event.preventDefault();
+
+    //Clear all previous errors
+    clearAllErrors();
+
+    let valid = true;
+
+    // Validate Username (required, cannot be empty/whitespace)
+    if (!loginName || loginName.trim() === '') {
+      setLoginNameError('Username is required.');
+      valid = false;
+    }
+
+    // Validate Password (required, cannot be empty/whitespace)
+    if (!loginPassword || loginPassword.trim() === '') {
+      setLoginPasswordError('Password is required.');
+      valid = false;
+    }
+
+    // If validation failed, stop here
+    if (!valid) {
+      return;
+    }
 
     try {
       const { data: res } = await axios.post(
@@ -85,41 +122,50 @@ function Login() {
 
   return (
     <div id="loginDiv">
-      <span id="inner-title">PLEASE LOG IN</span><br />
-      Username:{' '}
-      <input
-        type="text"
-        id="loginName"
-        placeholder="Username"
-        onChange={handleSetLoginName}
-      />
-      <br />
-      Password:{' '}
-      <input
-        type="password"
-        id="loginPassword"
-        placeholder="Password"
-        onChange={handleSetPassword}
-      />
-      <br />
-      <input
-        type="submit"
-        id="loginButton"
-        className="buttons"
-        value="Do It"
-        onClick={doLogin}
-      />
-      <span id="loginResult">{message}</span>
-      <br /><br />
-      <span id="newUserText">New User?</span><br />
-      <button
-        type="button"
-        id="signUpButton"
-        className="buttons"
-        onClick={goToRegister}
-      >
-        Sign Up Now!
-      </button>
+      <span id="inner-title">Please Log In</span>
+
+        <label htmlFor="loginName">Username</label>
+        <input
+          type="text"
+          id="loginName"
+          placeholder="Username"
+          value={loginName}
+          onChange={handleSetLoginName}
+          aria-invalid={loginNameError ? 'true' : 'false'}
+        />
+        {loginNameError && <div className="error">{loginNameError}</div>}
+
+        <label htmlFor="loginPassword">Password</label>
+        <input
+          type="password"
+          id="loginPassword"
+          placeholder="Password"
+          value={loginPassword}
+          onChange={handleSetPassword}
+          aria-invalid={loginPasswordError ? 'true' : 'false'}
+        />
+        {loginPasswordError && <div className="error">{loginPasswordError}</div>}
+
+        <input
+          type="submit"
+          id="loginButton"
+          className="buttons"
+          value="Do It"
+          onClick={doLogin}
+        />
+        <span id="loginResult">{message}</span>
+
+        <div id="newUserSection">
+          <span id="newUserText">New User?</span>
+          <button
+            type="button"
+            id="signUpButton"
+            className="buttons"
+            onClick={goToRegister}
+          >
+            Sign Up Now!
+          </button>
+        </div>
     </div>
   );
 }
