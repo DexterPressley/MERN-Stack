@@ -203,9 +203,11 @@ function Register() {
     }
 
     return (
+    <div className="content-box">
         <div id="registerDiv">
-            <span id="inner-title">CREATE AN ACCOUNT</span><br />
-            First Name:{' '}
+            <span id="inner-title">CREATE AN ACCOUNT</span>
+            
+            <label htmlFor="firstName">First Name</label>
             <input
                 type="text"
                 id="firstName"
@@ -215,8 +217,8 @@ function Register() {
                 aria-invalid={firstNameError ? 'true' : 'false'}
             />
             {firstNameError && <div className="error">{firstNameError}</div>}
-            <br />
-            Last Name:{' '}
+            
+            <label htmlFor="lastName">Last Name</label>
             <input
                 type="text"
                 id="lastName"
@@ -226,8 +228,8 @@ function Register() {
                 aria-invalid={lastNameError ? 'true' : 'false'}
             />
             {lastNameError && <div className="error">{lastNameError}</div>}
-            <br />
-            Username:{' '}
+            
+            <label htmlFor="username">Username</label>
             <input
                 type="text"
                 id="username"
@@ -237,8 +239,8 @@ function Register() {
                 aria-invalid={usernameError ? 'true' : 'false'}
             />
             {usernameError && <div className="error">{usernameError}</div>}
-            <br />
-            Email:{' '}
+            
+            <label htmlFor="email">Email</label>
             <input
                 type="email"
                 id="email"
@@ -248,8 +250,8 @@ function Register() {
                 aria-invalid={emailError ? 'true' : 'false'}
             />
             {emailError && <div className="error">{emailError}</div>}
-            <br />
-            Password:{' '}
+            
+            <label htmlFor="password">Password</label>
             <input
                 type="password"
                 id="password"
@@ -259,8 +261,8 @@ function Register() {
                 aria-invalid={passwordError ? 'true' : 'false'}
             />
             {passwordError && <div className="error">{passwordError}</div>}
-            <br />
-            Confirm Password:{' '}
+            
+            <label htmlFor="confirmPassword">Confirm Password</label>
             <input
                 type="password"
                 id="confirmPassword"
@@ -270,7 +272,7 @@ function Register() {
                 aria-invalid={confirmPasswordError ? 'true' : 'false'}
             />
             {confirmPasswordError && <div className="error">{confirmPasswordError}</div>}
-            <br />
+            
             <input
                 type="submit"
                 id="registerButton"
@@ -280,7 +282,8 @@ function Register() {
             />
             <span id="registerResult">{message}</span>
         </div>
-    );
+    </div>
+);
 }
 
 export default Register;

@@ -116,3 +116,129 @@ input:focus, textarea:focus {
   outline: 2px solid var(--forest-green);
   border-color: var(--forest-green);
 }
+
+/* ============================
+   Register Page Styling
+============================ */
+
+/* Register container styling */
+#registerDiv {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+/* Title styling */
+#inner-title {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 600;
+  text-align: center;
+  margin-bottom: 24px;
+  color: var(--text);
+}
+
+/* Form layout - stack labels and inputs vertically */
+#registerDiv > br {
+  display: none; /* Hide the <br> tags */
+}
+
+#registerDiv label,
+#registerDiv input[type="text"],
+#registerDiv input[type="email"],
+#registerDiv input[type="password"] {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+/* Label styling */
+#registerDiv label {
+  font-weight: 600;
+  color: var(--muted);
+  margin-top: 12px;
+  font-size: 14px;
+}
+
+/* Input styling */
+#registerDiv input[type="text"],
+#registerDiv input[type="email"],
+#registerDiv input[type="password"] {
+  padding: 10px 12px;
+  border: 2px solid var(--border);
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: var(--font);
+  transition: border-color 0.2s ease;
+  background: white;
+}
+
+#registerDiv input[type="text"]:focus,
+#registerDiv input[type="email"]:focus,
+#registerDiv input[type="password"]:focus {
+  outline: none;
+  border-color: var(--brand);
+}
+
+/* RED BORDER for invalid inputs */
+#registerDiv input[aria-invalid="true"] {
+  border: 2px solid #e74c3c !important;
+}
+
+/* Green border for valid inputs */
+#registerDiv input[aria-invalid="false"] {
+  border: 2px solid #2ecc71;
+}
+
+/* RED ERROR TEXT under inputs */
+#registerDiv .error {
+  color: #e74c3c;
+  font-size: 0.9em;
+  margin-top: 4px;
+  margin-bottom: 8px;
+  font-family: var(--font);
+  display: block;
+}
+
+/* Sign Up button - match forest green background */
+#registerButton {
+  width: 100%;
+  padding: 12px;
+  margin-top: 20px;
+  background-color: #2d5016; /* Forest green to match body background */
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: var(--font);
+}
+
+#registerButton:hover {
+  background-color: #3d6b1f; /* Slightly lighter on hover */
+}
+
+#registerButton:active {
+  transform: translateY(1px);
+}
+
+/* Result message below button */
+#registerResult {
+  display: block;
+  text-align: center;
+  margin-top: 12px;
+  font-size: 0.95rem;
+  color: var(--muted);
+}
+
+/* Success message in green */
+#registerResult.success {
+  color: #2ecc71;
+}
+
+/* Error message in red */
+#registerResult.error {
+  color: #e74c3c;
+}
