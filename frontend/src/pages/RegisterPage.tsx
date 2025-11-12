@@ -3,7 +3,7 @@ import Register from '../components/Register.tsx';
 
 const RegisterPage = () => {
     return (
-        <div>
+        <div className="content-box">
             <PageTitle />
             <Register />
         </div>

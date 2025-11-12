@@ -63,21 +63,31 @@ exports.addEntry = async (req, res) => {
     const addedEntry = day.Entries[day.Entries.length - 1];
     const entryId = addedEntry._id.toString();
     
-    // Return enriched entry with food details for Flutter
+    // ⚠️ CRITICAL: Return enriched entry with food details
     return res.status(201).json({ 
       success: true,
       message: 'Entry added successfully',
       entry: {
         entryId,
+        _id: entryId,
         foodId: parseInt(foodId),
+        FoodID: parseInt(foodId),
         foodName: food.Name,
         amount: amountNum,
+        Amount: amountNum,
         mealType: mealType,
+        MealType: mealType,
+        caloriesPerUnit: food.CaloriesPerUnit,
+        proteinPerUnit: food.ProteinPerUnit,
+        carbsPerUnit: food.CarbsPerUnit,
+        fatPerUnit: food.FatPerUnit,
+        unit: food.Unit,
         calories: Math.round(food.CaloriesPerUnit * amountNum),
         protein: Math.round(food.ProteinPerUnit * amountNum),
         carbs: Math.round(food.CarbsPerUnit * amountNum),
         fat: Math.round(food.FatPerUnit * amountNum),
-        timestamp: addedEntry.Timestamp
+        timestamp: addedEntry.Timestamp,
+        Timestamp: addedEntry.Timestamp
       }
     });
   } catch (e) {
@@ -161,15 +171,25 @@ exports.updateEntry = async (req, res) => {
       message: 'Entry updated successfully',
       entry: {
         entryId: entry._id.toString(),
+        _id: entry._id.toString(),
         foodId: entry.FoodID,
+        FoodID: entry.FoodID,
         foodName: food.Name,
         amount: entry.Amount,
+        Amount: entry.Amount,
         mealType: entry.MealType,
+        MealType: entry.MealType,
+        caloriesPerUnit: food.CaloriesPerUnit,
+        proteinPerUnit: food.ProteinPerUnit,
+        carbsPerUnit: food.CarbsPerUnit,
+        fatPerUnit: food.FatPerUnit,
+        unit: food.Unit,
         calories: Math.round(food.CaloriesPerUnit * entry.Amount),
         protein: Math.round(food.ProteinPerUnit * entry.Amount),
         carbs: Math.round(food.CarbsPerUnit * entry.Amount),
         fat: Math.round(food.FatPerUnit * entry.Amount),
-        timestamp: entry.Timestamp
+        timestamp: entry.Timestamp,
+        Timestamp: entry.Timestamp
       }
     });
   } catch (e) {
