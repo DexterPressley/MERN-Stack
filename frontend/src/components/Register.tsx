@@ -146,45 +146,11 @@ function Register() {
                 return;
             }
 
-            // Step 2: Automatically log in the user after successful registration
-            try {
-                const { data: loginRes } = await axios.post(
-                    buildPath('api/login'),
-                    { login: username, password: password },
-                    { headers: { 'Content-Type': 'application/json' } }
-                );
-
-                if (loginRes?.id && loginRes.id > 0) {
-                    // Store user data in localStorage
-                    const userData = {
-                        id: loginRes.id,
-                        firstName: loginRes.firstName || firstName,
-                        lastName: loginRes.lastName || lastName,
-                        username: username
-                    };
-                    localStorage.setItem('user_data', JSON.stringify(userData));
-
-                    setMessage('Registration successful! Redirecting...');
-
-                    // Redirect to cards page after short delay
-                    setTimeout(() => {
-                        window.location.href = '/cards';
-                    }, 1500);
-                } else {
-                    setMessage('Account created. Please log in.');
-                    // Optionally redirect to login page
-                    setTimeout(() => {
-                        window.location.href = '/';
-                    }, 2000);
-                }
-            } catch (loginErr: any) {
-                console.error('Auto-login error:', loginErr);
-                setMessage('Account created, but auto-login failed. Please log in.');
-                // Optionally redirect to login page
-                setTimeout(() => {
-                    window.location.href = '/';
-                }, 2000);
-            }
+            setMessage('Registration successful! Please check your email to verify your account.');
+            // Redirect to login page after short delay
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 2000);
 
         } catch (err: any) {
             console.error('Registration error:', err);
