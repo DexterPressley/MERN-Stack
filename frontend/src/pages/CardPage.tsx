@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import PageTitle from "../components/PageTitle";
 import LoggedInName from "../components/LoggedInName";
 import CardUI from "../components/CardUI";
@@ -8,7 +9,16 @@ export default function CardPage() {
       {/* Left sidebar */}
       <aside className="sidebar">
         <div className="sidebar-section">
-          <h3>Dashboard</h3>
+          <Link 
+            to="/dashboard" 
+            style={{ 
+              textDecoration: 'none', 
+              color: 'inherit',
+              cursor: 'pointer'
+            }}
+          >
+            <h3>Dashboard</h3>
+          </Link>
           <ul>
             <li className="active">Cards</li>
             <li>Trends</li>
@@ -21,18 +31,15 @@ export default function CardPage() {
       <main className="main">
         <PageTitle />
         <LoggedInName />
-
         <div className="grid">
           <section className="card span-2">
             <h2>Cards</h2>
             <CardUI />
           </section>
-
           <section className="card">
             <h2>Today</h2>
             <p className="muted">Quick summary (placeholder)</p>
           </section>
-
           <section className="card">
             <h2>Recent</h2>
             <p className="muted">Your latest actions (placeholder)</p>

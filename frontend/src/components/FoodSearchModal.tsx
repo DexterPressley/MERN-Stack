@@ -3,44 +3,21 @@ import React from "react";
 import { useFoodOptional } from "../context/FoodContext";
 import type { FoodItem } from "../context/FoodContext";
 
-// Mock food database - later you can replace with API call
-const FOOD_DATABASE: FoodItem[] = [
-  { id: "1", name: "Chicken Breast (100g)", protein: 31, carbs: 0, fats: 3.6 },
-  { id: "2", name: "Brown Rice (1 cup)", protein: 5, carbs: 45, fats: 2 },
-  { id: "3", name: "Banana", protein: 1, carbs: 27, fats: 0.3 },
-  { id: "4", name: "Eggs (2 large)", protein: 12, carbs: 1, fats: 10 },
-  { id: "5", name: "Oatmeal (1 cup)", protein: 6, carbs: 27, fats: 3 },
-  { id: "6", name: "Salmon (100g)", protein: 25, carbs: 0, fats: 13 },
-  { id: "7", name: "Broccoli (1 cup)", protein: 3, carbs: 6, fats: 0.3 },
-  { id: "8", name: "Almonds (28g)", protein: 6, carbs: 6, fats: 14 },
-  { id: "9", name: "Greek Yogurt (170g)", protein: 17, carbs: 9, fats: 0 },
-  { id: "10", name: "Sweet Potato (medium)", protein: 2, carbs: 26, fats: 0 },
-  { id: "11", name: "Apple", protein: 0.5, carbs: 25, fats: 0.3 },
-  { id: "12", name: "Peanut Butter (2 tbsp)", protein: 8, carbs: 7, fats: 16 },
-];
-
 export default function FoodSearchModal() {
   const food = useFoodOptional();
-  const [searchQuery, setSearchQuery] = React.useState("");
 
   if (!food) return null;
 
-  const { isSearchOpen, selectedMeal, closeSearch, addFoodToMeal } = food;
+  const { isSearchOpen, selectedMeal, searchResults, recentSearches, closeSearch, addFoodToMeal } = food;
 
   if (!isSearchOpen || !selectedMeal) return null;
 
-  // Filter foods based on search query
-  const filteredFoods = searchQuery.trim()
-    ? FOOD_DATABASE.filter((item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase())
-      )
-    : FOOD_DATABASE;
+  // Show search results if available, otherwise show recent searches
+  const displayItems = searchResults.length > 0 ? searchResults : recentSearches;
+  const headerText = searchResults.length > 0 ? "Search Results" : "Recently Added";
 
-  const handleAddFood = (item: FoodItem) => {
-    // Create unique ID with timestamp to allow duplicates
-    const uniqueItem = { ...item, id: `${item.id}-${Date.now()}` };
-    addFoodToMeal(selectedMeal, uniqueItem);
-    setSearchQuery("");
+  const handleAddFood = async (item: FoodItem) => {
+    await addFoodToMeal(selectedMeal, item);
     closeSearch();
   };
 
@@ -74,36 +51,22 @@ export default function FoodSearchModal() {
       >
         {/* Header */}
         <div style={{ marginBottom: 16 }}>
-          <h3 style={{ marginTop: 0, marginBottom: 8 }}>Add Food to {selectedMeal}</h3>
-          
-          {/* Search Input */}
-          <input
-            type="text"
-            placeholder="Search foods..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            autoFocus
-            style={{
-              width: "100%",
-              padding: "10px 12px",
-              border: "2px solid #e5e7eb",
-              borderRadius: 8,
-              fontSize: 14,
-              boxSizing: "border-box",
-            }}
-          />
+          <h3 style={{ marginTop: 0, marginBottom: 4 }}>Add Food to {selectedMeal}</h3>
+          <p style={{ margin: 0, fontSize: 14, color: "#6b7280" }}>{headerText}</p>
         </div>
 
         {/* Food List */}
         <div style={{ flex: 1, overflowY: "auto", marginBottom: 16 }}>
-          {filteredFoods.length === 0 ? (
+          {displayItems.length === 0 ? (
             <p style={{ color: "#6b7280", textAlign: "center", padding: 20 }}>
-              No foods found
+              {searchResults.length === 0 && recentSearches.length === 0
+                ? "No recent items. Use the search bar to find foods."
+                : "No items found"}
             </p>
           ) : (
             <div style={{ display: "grid", gap: 8 }}>
-              {filteredFoods.map((item) => {
-                const calories = item.protein * 4 + item.carbs * 4 + item.fats * 9;
+              {displayItems.map((item) => {
+                const calories = Math.round(item.calories || (item.protein * 4 + item.carbs * 4 + item.fats * 9));
                 return (
                   <div
                     key={item.id}
@@ -127,7 +90,7 @@ export default function FoodSearchModal() {
                   >
                     <div style={{ fontWeight: 600, marginBottom: 4 }}>{item.name}</div>
                     <div style={{ fontSize: 13, color: "#6b7280" }}>
-                      {calories} cal • P: {item.protein}g • C: {item.carbs}g • F: {item.fats}g
+                      {calories} cal • {item.unit} • P: {item.protein}g • C: {item.carbs}g • F: {item.fats}g
                     </div>
                   </div>
                 );

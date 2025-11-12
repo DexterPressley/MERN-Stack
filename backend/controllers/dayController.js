@@ -28,7 +28,7 @@ exports.getDays = async (req, res) => {
     }
 
     const days = await Day.find(query)
-      .select({ DayID: 1, Date: 1, Entries: 1, _id: 0 })
+      .select({ DayID: 1, Date: 1, Entries: 1 })
       .sort({ Date: -1 })
       .lean();
 
@@ -52,7 +52,7 @@ exports.getDayById = async (req, res) => {
       DayID: parseInt(dayId), 
       UserID: parseInt(userId) 
     })
-    .select({ DayID: 1, Date: 1, Entries: 1, _id: 0 })
+    .select({ DayID: 1, Date: 1, Entries: 1 })
     .lean();
 
     if (!day) {

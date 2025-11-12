@@ -197,7 +197,7 @@ exports.deleteEntry = async (req, res) => {
       return res.status(404).json({ error: 'Entry not found in this day' });
     }
 
-    entry.remove();
+    day.Entries.pull(entryId);
     await day.save();
     
     return res.status(200).json({ 

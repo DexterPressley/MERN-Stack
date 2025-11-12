@@ -6,9 +6,20 @@ const mongoose = require('mongoose');
 
 const app = express();
 
-// Middleware
-app.use(cors());
-app.use(express.json());
+// Middleware - MUST be before routes
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.json());  // This parses JSON request bodies
+
+// Debug logging
+app.use((req, res, next) => {
+  console.log(`${req.method} ${req.path}`);
+  next();
+});
 
 // MongoDB URI validation
 const uri = process.env.MONGO_URI;
@@ -27,7 +38,7 @@ mongoose.connect(uri, { dbName: 'COP4331Cards' })
   .then(() => {
     console.log('✅ MongoDB connected (Mongoose)');
     
-    // Import routes AFTER Mongoose connects (models are globally registered)
+    // Import routes AFTER Mongoose connects
     const userRoutes = require('./backend/routes/userRoutes');
     const foodRoutes = require('./backend/routes/foodRoutes');
     const dayRoutes = require('./backend/routes/dayRoutes');
@@ -53,7 +64,7 @@ app.use((err, req, res, next) => {
 });
 
 // Start server
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
 });

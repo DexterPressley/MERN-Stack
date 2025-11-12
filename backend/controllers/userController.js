@@ -122,10 +122,10 @@ exports.login = async (req, res) => {
       return res.status(401).json({ error: 'Username/Password incorrect' });
     }
 
-
-    if (!u.IsVerified) {
-    return res.status(401).json({ error: 'Your Email not yet verified. Please check your inbox.' });
-    }
+    // TEMPORARILY DISABLED FOR DEVELOPMENT
+    // if (!u.IsVerified) {
+    //   return res.status(401).json({ error: 'Your Email not yet verified. Please check your inbox.' });
+    // }
 
     const id = u.UserID;
     const fn = u.FirstName;
@@ -134,24 +134,51 @@ exports.login = async (req, res) => {
     try {
       const ret = token.createToken(fn, ln, id);
       return res.status(200).json({
-      success: true,
-      accessToken: ret.accessToken,
-      userId: id,
-      firstName: fn,
-      lastName: ln,
-      username: u.Username
+        success: true,
+        accessToken: ret.accessToken,
+        userId: id,
+        firstName: fn,
+        lastName: ln,
+        username: u.Username
       });
     } catch (e) {
       return res.status(500).json({ error: e.message });
     }
-
-    
-
-
-
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: 'server error' });
+  }
+};
+
+// Get user info
+exports.getUserInfo = async (req, res) => {
+  const { userId } = req.params;
+  
+  try {
+    const user = await User.findOne({ UserID: parseInt(userId) }).lean();
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    return res.status(200).json({
+      success: true,
+      user: {
+        UserID: user.UserID,
+        FirstName: user.FirstName,
+        LastName: user.LastName,
+        Username: user.Username,
+        Email: user.Email,
+        CalorieGoal: user.CalorieGoal,
+        ProteinGoal: user.ProteinGoal,
+        CarbsGoal: user.CarbsGoal,
+        FatGoal: user.FatGoal,
+        DayRolloverTime: user.DayRolloverTime
+      }
+    });
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: 'Server error fetching user info' });
   }
 };
 
