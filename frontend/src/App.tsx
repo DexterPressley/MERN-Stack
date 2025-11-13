@@ -1,19 +1,29 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import './App.css';
 import LoginPage from './pages/LoginPage';
 import CardPage from './pages/CardPage';
 import RegisterPage from './pages/RegisterPage';
-import VerifyEmail from './pages/VerifyEmail';
+import DashboardPage from './pages/DashboardPage';
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+  
   return (
-    <BrowserRouter>
+    <>
       <Routes>
         <Route path="/" element={<LoginPage />} />
         <Route path="/cards" element={<CardPage />} />
         <Route path="/register" element={<RegisterPage />} />
-        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
       </Routes>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppContent />
     </BrowserRouter>
   );
 }
