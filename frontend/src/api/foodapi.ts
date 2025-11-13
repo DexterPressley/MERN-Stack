@@ -1,6 +1,8 @@
 // frontend/src/api/foodApi.ts
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = import.meta.env.PROD 
+  ? 'https://colorsdigitalocean.xyz/api'  // Production API
+  : 'http://localhost:3001/api';           // Local development
 
 export interface FoodItem {
   id: string;
