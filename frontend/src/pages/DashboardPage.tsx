@@ -11,4 +11,4 @@ export default function DashboardPage() {
     </div>
   );
 }
-
+export default DashboardPage;
