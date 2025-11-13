@@ -1,5 +1,4 @@
 // src/pages/DashboardPage.tsx
-import React from "react";
 import { FoodProvider } from "../context/FoodContext";
 import CalendarWidget from "../components/CalendarWidget";
 import MacroBar from "../components/MacroProgressBar";

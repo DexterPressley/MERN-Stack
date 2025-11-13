@@ -1,5 +1,4 @@
 // src/components/FoodSearchModal.tsx
-import React from "react";
 import { useFoodOptional } from "../context/FoodContext";
 import type { FoodItem } from "../context/FoodContext";
 

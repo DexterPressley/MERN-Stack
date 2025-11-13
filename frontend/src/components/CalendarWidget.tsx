@@ -1,5 +1,4 @@
 // src/components/CalendarWidget.tsx
-import React from "react";
 
 function CalendarWidget() {
   const today = new Date();

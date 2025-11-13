@@ -1,5 +1,4 @@
 // src/components/MealSection.tsx
-import React from "react";
 import type { MealType } from "../context/FoodContext";
 import { useFoodOptional } from "../context/FoodContext";
 
