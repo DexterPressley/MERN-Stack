@@ -154,6 +154,47 @@ exports.login = async (req, res) => {
     return res.status(500).json({ error: 'server error' });
   }
 };
+// Get user profile with goals
+exports.getUser = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findOne({ UserID: parseInt(userId) })
+      .select('-Password -VerificationToken -VerificationTokenExpires -ResetPasswordToken -ResetPasswordExpires')
+      .lean();
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'User not found' 
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        userId: user.UserID,
+        firstName: user.FirstName,
+        lastName: user.LastName,
+        username: user.Username,
+        email: user.Email,
+        calorieGoal: user.CalorieGoal,
+        proteinGoal: user.ProteinGoal,
+        carbsGoal: user.CarbsGoal,
+        fatGoal: user.FatGoal,
+        dayRolloverTime: user.DayRolloverTime,
+        isVerified: user.IsVerified,
+        createdAt: user.CreatedAt
+      }
+    });
+  } catch (e) {
+    console.error('Get user error:', e);
+    return res.status(500).json({ 
+      success: false,
+      error: 'Server error retrieving user' 
+    });
+  }
+};
 
 // Update calorie goal
 exports.updateCalorieGoal = async (req, res) => {
