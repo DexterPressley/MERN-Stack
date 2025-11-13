@@ -194,7 +194,7 @@ export function FoodProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function removeFoodFromMeal(meal: MealType, entryId: string) {
+  async function removeFoodFromMeal(_meal: MealType, entryId: string) {
     //debugging
     console.log('🗑️ Attempting to delete entryId:', entryId); // ADD THIS
     if (!currentDayId) {
