@@ -3,6 +3,7 @@ import './App.css';
 import LoginPage from './pages/LoginPage';
 import CardPage from './pages/CardPage';
 import RegisterPage from './pages/RegisterPage';
+import DashboardPage from './pages/DashboardPage';
 import VerifyEmail from './pages/VerifyEmail';
 
 function App() {
@@ -12,6 +13,7 @@ function App() {
         <Route path="/" element={<LoginPage />} />
         <Route path="/cards" element={<CardPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/dashboard" element={<DashboardPage />} />
         <Route path="/verify-email" element={<VerifyEmail />} />
       </Routes>
     </BrowserRouter>
@@ -19,4 +21,3 @@ function App() {
 }
 
 export default App;
-
