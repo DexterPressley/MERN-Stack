@@ -1,11 +1,7 @@
 // src/pages/FoodLanding.tsx
 
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-  FormEvent,
-} from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
 import { retrieveToken } from "../tokenStorage";
 
 interface Food {
