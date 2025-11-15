@@ -530,3 +530,37 @@ exports.resetPassword = async (req, res) => {
     });
   }
 };
+
+exports.resendVerificationEmail = async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ success: false, message: 'Email is required' });
+        }
+
+        const user = await User.findOne({ email });
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        if (user.isVerified) {
+            return res.status(400).json({ success: false, message: 'Email already verified' });
+        }
+
+        // Generate new token
+        const token = crypto.randomBytes(32).toString('hex');
+        user.verificationToken = token;
+        user.verificationTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 24 hours
+        await user.save();
+
+        // Send email
+        await emailService.sendVerificationEmail(email, token, user.firstName);
+
+        return res.status(200).json({ success: true, message: 'Verification email resent' });
+    } catch (error) {
+        console.error('Error resending verification email:', error);
+        return res.status(500).json({ success: false, message: 'Server error' });
+    }
+};
