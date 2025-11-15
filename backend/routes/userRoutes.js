@@ -13,7 +13,7 @@ router.post('/verify-email', userController.verifyEmail);
 router.post('/forgot-username', userController.forgotUsername);
 router.post('/forgot-password', userController.forgotPassword);
 router.post('/reset-password', userController.resetPassword);
-
+router.post('/resend-verification', userController.resendVerificationEmail);
 // Protected routes (auth required)
 router.patch('/users/:userId/calorie-goal', 
   authMiddleware, 
