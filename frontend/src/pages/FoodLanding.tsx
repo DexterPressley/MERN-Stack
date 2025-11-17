@@ -331,12 +331,20 @@ const FoodLanding: React.FC = () => {
           </div>
         </div>
 
+        {/* Horizontal Divider */}
+        <div style={{
+          height: "1px",
+          backgroundColor: "#6f4e37",
+          margin: "1.5rem 0"
+        }}></div>
+
         {/* Search and Add Food - Side by Side */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "1fr 1fr",
+          gridTemplateColumns: "1fr auto 1fr",
           gap: "1.5rem",
-          marginBottom: "1.5rem"
+          marginBottom: "1.5rem",
+          alignItems: "start"
         }}>
           {/* Search Section */}
           <div>
@@ -366,6 +374,15 @@ const FoodLanding: React.FC = () => {
               Filter your food entries by name
             </p>
           </div>
+
+          {/* Vertical Divider */}
+          <div style={{
+            width: "1px",
+            backgroundColor: "#6f4e37",
+            alignSelf: "stretch",
+            marginTop: "2.5rem",
+            marginBottom: "0.5rem"
+          }}></div>
 
           {/* Add Food Form */}
           <form onSubmit={handleAdd}>
@@ -443,6 +460,14 @@ const FoodLanding: React.FC = () => {
             Loading…
           </div>
         )}
+
+        {/* Horizontal Divider */}
+        <div style={{
+          height: "1px",
+          backgroundColor: "#6f4e37",
+          margin: "1.5rem 0"
+        }}></div>
+
 
         {/* Foods Table */}
         <section>
