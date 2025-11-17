@@ -13,6 +13,7 @@ interface Food {
   fatPerUnit: number;
   unit: string;
   upc?: string | null;
+  createdAt?: string;
 }
 
 const APP_URL =
@@ -44,6 +45,30 @@ function getAuth(): { token: string | null; userId: string | null } {
   return { token, userId };
 }
 
+function getUserName(): string {
+  const raw = localStorage.getItem("user_data");
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as {
+        firstName?: string;
+        lastName?: string;
+      };
+      const firstName = parsed.firstName || "";
+      const lastName = parsed.lastName || "";
+      return `${firstName} ${lastName}`.trim() || "User";
+    } catch {
+    }
+  }
+  return "User";
+}
+
+function formatDate(dateString?: string): string {
+  if (!dateString) return new Date().toLocaleDateString('en-US');
+  const date = new Date(dateString);
+  return date.toLocaleDateString('en-US');
+}
+
+
 const FoodLanding: React.FC = () => {
   const [foods, setFoods] = useState<Food[]>([]);
   const [search, setSearch] = useState<string>("");
@@ -51,6 +76,8 @@ const FoodLanding: React.FC = () => {
   const [calories, setCalories] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
+
+  const userName = getUserName();
 
   const filteredFoods = useMemo<Food[]>(() => {
     const term = search.trim().toLowerCase();
@@ -111,6 +138,7 @@ const FoodLanding: React.FC = () => {
           FatPerUnit: number;
           Unit: string;
           UPC?: string | null;
+          CreatedAt?: string | null;
         }>;
         count?: number;
       };
@@ -126,6 +154,7 @@ const FoodLanding: React.FC = () => {
         fatPerUnit: f.FatPerUnit,
         unit: f.Unit,
         upc: f.UPC ?? null,
+        createdAt: f.CreatedAt ?? undefined,
       }));
 
       setFoods(mapped);
@@ -207,6 +236,7 @@ const FoodLanding: React.FC = () => {
       return;
     }
 
+    // * GET RID OF POP UP WINDOW FROM CHROME, MAKE CUSTOM WINDOW LATER *
     const ok = window.confirm("Delete this food entry?");
     if (!ok) return;
 
@@ -246,407 +276,186 @@ const FoodLanding: React.FC = () => {
     }
   }
 
+  function handleLogout(): void {
+    localStorage.removeItem('user_data');
+    localStorage.removeItem('token_data');
+    window.location.href = '/';
+  }
+
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        margin: 0,
-        padding: "2rem 1rem",
-        background:
-          "radial-gradient(circle at top left, #22c55e 0, transparent 55%), radial-gradient(circle at bottom right, #f97316 0, #020617 55%)",
-        display: "flex",
-        justifyContent: "center",
-        boxSizing: "border-box",
-        fontFamily:
-          '-apple-system, BlinkMacSystemFont, system-ui, "SF Pro Text", sans-serif',
-      }}
-    >
-      <div
-        style={{
-          width: "100%",
-          maxWidth: "960px",
-          background: "rgba(15, 23, 42, 0.96)",
-          borderRadius: "1.5rem",
-          padding: "2rem",
-          boxShadow:
-            "0 24px 60px rgba(15, 23, 42, 0.7), 0 0 0 1px rgba(148, 163, 184, 0.18)",
-          color: "#f9fafb",
-        }}
-      >
-        {/* Header */}
-        <header
-          style={{
-            display: "flex",
-            flexWrap: "wrap",
-            justifyContent: "space-between",
-            gap: "1rem",
-            marginBottom: "2rem",
-            alignItems: "center",
-          }}
-        >
-          <div>
-            <h1
-              style={{
-                fontSize: "1.9rem",
-                fontWeight: 700,
-                letterSpacing: "-0.03em",
-              }}
-            >
-              Calorie Tracker
-            </h1>
-            <p style={{ color: "#9ca3af", marginTop: "0.3rem" }}>
-              Search, add, and delete foods for your daily log.
-            </p>
-          </div>
-          <div
-            style={{
-              textAlign: "right",
-              minWidth: "160px",
-            }}
+    <div className="content-box" style={{ maxWidth: "1000px" }}>
+      <div id="foodLandingDiv">
+        {/* Header with welcome and logout */}
+        <div className="header-row" style={{ marginBottom: "1.5rem" }}>
+          <span id="inner-title">Welcome, {userName}!</span>
+          <button
+            type="button"
+            className="btn btn-back"
+            onClick={handleLogout}
           >
-            <div
-              style={{
-                fontSize: "0.8rem",
-                textTransform: "uppercase",
-                letterSpacing: "0.08em",
-                color: "#6b7280",
-                marginBottom: "0.25rem",
-              }}
-            >
-              Total calories
-            </div>
-            <div
-              style={{
-                fontSize: "1.4rem",
-                fontWeight: 700,
-                color: "#bbf7d0",
-              }}
-            >
-              {totalCalories}
-              <span
-                style={{
-                  fontSize: "0.8rem",
-                  marginLeft: "0.25rem",
-                  color: "#9ca3af",
-                }}
-              >
-                kcal
-              </span>
-            </div>
-          </div>
-        </header>
-
-        {/* Controls: search + add */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1.4fr)",
-            gap: "1.5rem",
-            marginBottom: "1.75rem",
-          }}
-        >
-          {/* Search */}
-          <div
-            style={{
-              background: "rgba(15, 23, 42, 0.95)",
-              borderRadius: "1rem",
-              padding: "1rem",
-              border: "1px solid rgba(148, 163, 184, 0.35)",
-            }}
-          >
-            <label
-              htmlFor="food-search"
-              style={{ fontSize: "0.8rem", color: "#9ca3af" }}
-            >
-              Search foods
-            </label>
-            <input
-              id="food-search"
-              type="text"
-              placeholder="e.g. chicken, rice, apple..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{
-                marginTop: "0.4rem",
-                width: "100%",
-                padding: "0.65rem 0.85rem",
-                borderRadius: "0.7rem",
-                border: "1px solid rgba(55, 65, 81, 0.95)",
-                background: "#020617",
-                color: "#f9fafb",
-                fontSize: "0.9rem",
-                outline: "none",
-              }}
-            />
-            <p
-              style={{
-                marginTop: "0.4rem",
-                fontSize: "0.75rem",
-                color: "#6b7280",
-              }}
-            >
-              Filtering is client-side. Clear the search to see all entries.
-            </p>
-          </div>
-
-          {/* Add food */}
-          <form
-            onSubmit={handleAdd}
-            style={{
-              background: "rgba(15, 23, 42, 0.95)",
-              borderRadius: "1rem",
-              padding: "1rem",
-              border: "1px solid rgba(148, 163, 184, 0.35)",
-            }}
-          >
-            <h2
-              style={{
-                fontSize: "0.95rem",
-                fontWeight: 600,
-                marginBottom: "0.7rem",
-              }}
-            >
-              Add food entry
-            </h2>
-
-            <div style={{ marginBottom: "0.65rem" }}>
-              <label
-                htmlFor="food-name"
-                style={{ fontSize: "0.8rem", color: "#9ca3af" }}
-              >
-                Name
-              </label>
-              <input
-                id="food-name"
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Banana"
-                style={{
-                  width: "100%",
-                  marginTop: "0.3rem",
-                  padding: "0.6rem 0.85rem",
-                  borderRadius: "0.7rem",
-                  border: "1px solid rgba(55, 65, 81, 0.95)",
-                  background: "#020617",
-                  color: "#f9fafb",
-                  fontSize: "0.9rem",
-                  outline: "none",
-                }}
-              />
-            </div>
-
-            <div style={{ marginBottom: "0.9rem" }}>
-              <label
-                htmlFor="food-calories"
-                style={{ fontSize: "0.8rem", color: "#9ca3af" }}
-              >
-                Calories
-              </label>
-              <input
-                id="food-calories"
-                type="number"
-                min={0}
-                value={calories}
-                onChange={(e) => setCalories(e.target.value)}
-                placeholder="105"
-                style={{
-                  width: "100%",
-                  marginTop: "0.3rem",
-                  padding: "0.6rem 0.85rem",
-                  borderRadius: "0.7rem",
-                  border: "1px solid rgba(55, 65, 81, 0.95)",
-                  background: "#020617",
-                  color: "#f9fafb",
-                  fontSize: "0.9rem",
-                  outline: "none",
-                }}
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={!name.trim() || !calories.trim()}
-              style={{
-                width: "100%",
-                padding: "0.7rem 1rem",
-                borderRadius: "0.8rem",
-                border: "none",
-                fontWeight: 600,
-                fontSize: "0.9rem",
-                cursor:
-                  name.trim() && calories.trim() ? "pointer" : "not-allowed",
-                opacity: name.trim() && calories.trim() ? 1 : 0.5,
-                background:
-                  "linear-gradient(to right, #22c55e, #86efac, #22c55e)",
-                backgroundSize: "200% auto",
-                color: "#052e16",
-                transition: "transform 0.1s ease, box-shadow 0.1s ease",
-              }}
-              onMouseDown={(e) =>
-                (e.currentTarget.style.transform = "scale(0.97)")
-              }
-              onMouseUp={(e) =>
-                (e.currentTarget.style.transform = "scale(1)")
-              }
-            >
-              Add food
-            </button>
-          </form>
+            Logout
+          </button>
         </div>
 
-        {/* Status */}
-        {error && (
-          <div
+        {/* Title and Total Calories */}
+        <div style={{ marginBottom: "1.5rem" }}>
+          <h1 style={{ fontSize: "1.9rem", fontWeight: 700, margin: 0, color: "var(--text)" }}>
+            Calorie Tracker
+          </h1>
+          <p style={{ color: "var(--muted)", marginTop: "0.3rem", marginBottom: "0.5rem" }}>
+            Search, add, and delete foods for your daily log.
+          </p>
+          <div style={{ 
+            fontSize: "1.2rem", 
+            fontWeight: 600, 
+            color: "var(--brand)",
+            marginTop: "0.5rem"
+          }}>
+            Total Calories: {totalCalories} kcal
+          </div>
+        </div>
+
+        {/* Search Section */}
+        <div style={{ marginBottom: "1.5rem" }}>
+          <label htmlFor="food-search" style={{ fontWeight: 600, color: "var(--muted)" }}>
+            Search Foods
+          </label>
+          <input
+            id="food-search"
+            type="text"
+            placeholder="e.g. chicken, rice, apple..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             style={{
+              width: "100%",
+              marginTop: "0.5rem",
+              padding: "10px 12px",
+              border: "2px solid var(--border)",
+              borderRadius: "8px",
+              fontSize: "16px",
+            }}
+          />
+          <p style={{ marginTop: "0.4rem", fontSize: "0.85rem", color: "var(--muted)" }}>
+            Filter your food entries by name
+          </p>
+        </div>
+
+        {/* Add Food Form */}
+        <form onSubmit={handleAdd} style={{ marginBottom: "1.5rem" }}>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "1rem", color: "var(--text)" }}>
+            Add Food Entry
+          </h2>
+
+          <label htmlFor="food-name" style={{ fontWeight: 600, color: "var(--muted)" }}>
+            Food Name
+          </label>
+          <input
+            id="food-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Banana"
+            style={{
+              width: "100%",
+              marginTop: "0.5rem",
               marginBottom: "1rem",
-              padding: "0.75rem 1rem",
-              borderRadius: "0.8rem",
-              background: "rgba(248, 113, 113, 0.12)",
-              border: "1px solid rgba(248, 113, 113, 0.7)",
-              color: "#fecaca",
-              fontSize: "0.85rem",
+              padding: "10px 12px",
+              border: "2px solid var(--border)",
+              borderRadius: "8px",
+              fontSize: "16px",
+            }}
+          />
+
+          <label htmlFor="food-calories" style={{ fontWeight: 600, color: "var(--muted)" }}>
+            Calories
+          </label>
+          <input
+            id="food-calories"
+            type="number"
+            min={0}
+            value={calories}
+            onChange={(e) => setCalories(e.target.value)}
+            placeholder="105"
+            style={{
+              width: "100%",
+              marginTop: "0.5rem",
+              marginBottom: "1rem",
+              padding: "10px 12px",
+              border: "2px solid var(--border)",
+              borderRadius: "8px",
+              fontSize: "16px",
+            }}
+          />
+
+          <button
+            type="submit"
+            disabled={!name.trim() || !calories.trim()}
+            className="buttons"
+            style={{
+              width: "100%",
+              padding: "12px",
+              backgroundColor: !name.trim() || !calories.trim() ? "#ccc" : "#2d5016",
+              cursor: !name.trim() || !calories.trim() ? "not-allowed" : "pointer",
+              opacity: !name.trim() || !calories.trim() ? 0.6 : 1,
             }}
           >
+            Add Food
+          </button>
+        </form>
+
+        {/* Status Messages */}
+        {error && (
+          <div className="error" style={{ marginBottom: "1rem", display: "block" }}>
             {error}
           </div>
         )}
         {loading && (
-          <div
-            style={{
-              marginBottom: "0.75rem",
-              fontSize: "0.85rem",
-              color: "#9ca3af",
-            }}
-          >
+          <div style={{ marginBottom: "0.75rem", fontSize: "0.9rem", color: "var(--muted)" }}>
             Loading…
           </div>
         )}
 
-        {/* Foods table */}
+        {/* Foods Table */}
         <section>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              marginBottom: "0.6rem",
-              alignItems: "center",
-            }}
-          >
-            <h2 style={{ fontSize: "1rem", fontWeight: 600 }}>
-              Entries ({filteredFoods.length})
-            </h2>
-            <span style={{ fontSize: "0.75rem", color: "#6b7280" }}>
-              Showing filtered results{search ? ` for "${search}"` : ""}.
-            </span>
-          </div>
+          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "0.8rem", color: "var(--text)" }}>
+            Food Entries ({filteredFoods.length})
+          </h2>
 
           {filteredFoods.length === 0 ? (
-            <p style={{ fontSize: "0.9rem", color: "#6b7280" }}>
-              No foods to show yet. Add your first entry on the right.
+            <p style={{ fontSize: "0.9rem", color: "var(--muted)" }}>
+              No foods to show yet. Add your first entry above.
             </p>
           ) : (
-            <div
-              style={{
-                borderRadius: "1rem",
-                border: "1px solid rgba(55, 65, 81, 0.95)",
-                overflow: "hidden",
-                background: "rgba(15, 23, 42, 0.98)",
-              }}
-            >
-              <table
-                style={{
-                  width: "100%",
-                  borderCollapse: "collapse",
-                  fontSize: "0.9rem",
-                }}
-              >
-                <thead
-                  style={{
-                    background:
-                      "linear-gradient(to right, rgba(15, 23, 42, 1), rgba(15, 23, 42, 0.8))",
-                  }}
-                >
+            <div style={{ 
+              border: "1px solid var(--border)", 
+              borderRadius: "10px", 
+              overflow: "hidden" 
+            }}>
+              <table className="table" style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
                   <tr>
-                    <th
-                      style={{
-                        textAlign: "left",
-                        padding: "0.75rem 1rem",
-                        fontWeight: 500,
-                        color: "#9ca3af",
-                      }}
-                    >
-                      Food
-                    </th>
-                    <th
-                      style={{
-                        textAlign: "right",
-                        padding: "0.75rem 1rem",
-                        fontWeight: 500,
-                        color: "#9ca3af",
-                      }}
-                    >
-                      Calories
-                    </th>
-                    <th
-                      style={{
-                        textAlign: "center",
-                        padding: "0.75rem 0.75rem",
-                        fontWeight: 500,
-                        color: "#9ca3af",
-                        width: "80px",
-                      }}
-                    >
-                      Action
-                    </th>
+                    <th style={{ textAlign: "left", padding: "12px" }}>Food</th>
+                    <th style={{ textAlign: "right", padding: "12px" }}>Calories</th>
+                    <th style={{ textAlign: "center", padding: "12px" }}>Date Added</th>
+                    <th style={{ textAlign: "center", padding: "12px", width: "100px" }}>Action</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredFoods.map((food) => (
-                    <tr
-                      key={food.foodId}
-                      style={{
-                        borderTop: "1px solid rgba(31, 41, 55, 0.9)",
-                      }}
-                    >
-                      <td
-                        style={{
-                          padding: "0.7rem 1rem",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {food.name}
+                    <tr key={food.foodId}>
+                      <td style={{ padding: "12px", fontWeight: 500 }}>{food.name}</td>
+                      <td style={{ padding: "12px", textAlign: "right" }}>{food.caloriesPerUnit}</td>
+                      <td style={{ padding: "12px", textAlign: "center", color: "var(--muted)", fontSize: "0.9rem" }}>
+                        {formatDate(food.createdAt)}
                       </td>
-                      <td
-                        style={{
-                          padding: "0.7rem 1rem",
-                          textAlign: "right",
-                          color: "#e5e7eb",
-                        }}
-                      >
-                        {food.caloriesPerUnit}
-                      </td>
-                      <td
-                        style={{
-                          padding: "0.6rem 0.75rem",
-                          textAlign: "center",
-                        }}
-                      >
+                      <td style={{ padding: "12px", textAlign: "center" }}>
                         <button
                           type="button"
                           onClick={() => void handleDelete(food.foodId)}
-                          style={{
-                            borderRadius: "999px",
-                            border:
-                              "1px solid rgba(248, 113, 113, 0.75)",
-                            background: "rgba(127, 29, 29, 0.6)",
-                            color: "#fecaca",
-                            padding: "0.25rem 0.7rem",
-                            fontSize: "0.8rem",
-                            cursor: "pointer",
-                          }}
+                          className="btn btn--danger"
+                          style={{ fontSize: "0.85rem", padding: "6px 12px" }}
                         >
-                          🗑 Delete
+                          Delete
                         </button>
                       </td>
                     </tr>
