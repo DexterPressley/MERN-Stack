@@ -377,7 +377,7 @@ const FoodLanding: React.FC = () => {
 
           {/* Vertical Divider */}
           <div style={{
-            width: "1px",
+            width: "0px",
             backgroundColor: "#6f4e37",
             alignSelf: "stretch",
             marginTop: "2.5rem",
