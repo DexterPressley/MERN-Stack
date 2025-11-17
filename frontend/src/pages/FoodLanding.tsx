@@ -357,7 +357,7 @@ const FoodLanding: React.FC = () => {
                 marginTop: "0.3rem",
                 marginBottom: "0.8rem",
                 padding: "8px 10px",
-                border: "2px solid var(--border)",
+                border: "2px solid rgb(79, 62, 45)",
                 borderRadius: "8px",
                 fontSize: "14px",
               }}
@@ -387,7 +387,7 @@ const FoodLanding: React.FC = () => {
                 marginTop: "0.3rem",
                 marginBottom: "0.8rem",
                 padding: "8px 10px",
-                border: "2px solid var(--border)",
+                border: "2px solid rgb(79, 62, 45)",
                 borderRadius: "8px",
                 fontSize: "14px",
               }}
@@ -408,7 +408,7 @@ const FoodLanding: React.FC = () => {
                 marginTop: "0.3rem",
                 marginBottom: "0.8rem",
                 padding: "8px 10px",
-                border: "2px solid var(--border)",
+                border: "2px solid rgb(79, 62, 45)",
                 borderRadius: "8px",
                 fontSize: "14px",
               }}
