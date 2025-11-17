@@ -340,8 +340,11 @@ const FoodLanding: React.FC = () => {
         }}>
           {/* Search Section */}
           <div>
-            <label htmlFor="food-search" style={{ fontWeight: 600, color: "var(--muted)" }}>
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "1rem", color: "var(--text)" }}>
               Search Foods
+            </h2>
+            <label htmlFor="food-search" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
+              Food Name
             </label>
             <input
               id="food-search"
@@ -351,11 +354,12 @@ const FoodLanding: React.FC = () => {
               onChange={(e) => setSearch(e.target.value)}
               style={{
                 width: "100%",
-                marginTop: "0.5rem",
-                padding: "10px 12px",
+                marginTop: "0.3rem",
+                marginBottom: "0.8rem",
+                padding: "8px 10px",
                 border: "2px solid var(--border)",
                 borderRadius: "8px",
-                fontSize: "16px",
+                fontSize: "14px",
               }}
             />
             <p style={{ marginTop: "0.4rem", fontSize: "0.85rem", color: "var(--muted)" }}>
@@ -506,17 +510,18 @@ const FoodLanding: React.FC = () => {
             zIndex: 1000,
           }}>
             <div style={{
-              backgroundColor: "var(--card)",
+              backgroundColor: "#f5f5dc", /* Eggshell - fully opaque */
               borderRadius: "12px",
               padding: "2rem",
               maxWidth: "400px",
               width: "90%",
               boxShadow: "0 8px 24px rgba(0, 0, 0, 0.3)",
+              border: "1px solid #e0d8b8",
             }}>
               <h3 style={{
                 marginTop: 0,
                 marginBottom: "1rem",
-                color: "var(--text)",
+                color: "#2d5016",
                 fontSize: "1.2rem",
                 fontWeight: 600
               }}>
@@ -524,7 +529,7 @@ const FoodLanding: React.FC = () => {
               </h3>
               <p style={{
                 marginBottom: "1.5rem",
-                color: "var(--muted)",
+                color: "#6f4e37",
                 fontSize: "0.95rem"
               }}>
                 Are you sure you want to delete this food entry? This action cannot be undone.
@@ -540,9 +545,9 @@ const FoodLanding: React.FC = () => {
                   style={{
                     padding: "8px 16px",
                     borderRadius: "8px",
-                    border: "1px solid var(--border)",
+                    border: "2px solid #e0d8b8",
                     backgroundColor: "white",
-                    color: "var(--text)",
+                    color: "#2d5016",
                     fontSize: "14px",
                     fontWeight: 600,
                     cursor: "pointer",

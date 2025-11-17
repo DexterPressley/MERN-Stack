@@ -490,7 +490,7 @@ input:focus, textarea:focus {
 #foodLandingDiv input[type="text"]:focus,
 #foodLandingDiv input[type="number"]:focus {
   outline: none;
-  /* border-color: var(--brand); */
+  border-color: rgb(79, 62, 45);
 }
 
 #foodLandingDiv .buttons {
