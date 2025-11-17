@@ -15,6 +15,12 @@ router.post('/forgot-password', userController.forgotPassword);
 router.post('/reset-password', userController.resetPassword);
 router.post('/resend-verification', userController.resendVerificationEmail);
 // Protected routes (auth required)
+router.get('/users/:userId',
+  authMiddleware,
+  tokenRefresh,
+  userController.getUser
+);
+
 router.patch('/users/:userId/calorie-goal', 
   authMiddleware, 
   tokenRefresh, 
