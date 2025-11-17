@@ -532,35 +532,64 @@ exports.resetPassword = async (req, res) => {
 };
 
 exports.resendVerificationEmail = async (req, res) => {
-    try {
-        const { email } = req.body;
+  try {
+    const { email } = req.body;
 
-        if (!email) {
-            return res.status(400).json({ success: false, message: 'Email is required' });
-        }
-
-        const user = await User.findOne({ email });
-
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-
-        if (user.isVerified) {
-            return res.status(400).json({ success: false, message: 'Email already verified' });
-        }
-
-        // Generate new token
-        const token = crypto.randomBytes(32).toString('hex');
-        user.verificationToken = token;
-        user.verificationTokenExpires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 24 hours
-        await user.save();
-
-        // Send email
-        await emailService.sendVerificationEmail(email, token, user.firstName);
-
-        return res.status(200).json({ success: true, message: 'Verification email resent' });
-    } catch (error) {
-        console.error('Error resending verification email:', error);
-        return res.status(500).json({ success: false, message: 'Server error' });
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email is required' 
+      });
     }
+
+    // Use consistent field names (PascalCase to match your schema)
+    const user = await User.findOne({ Email: email.toLowerCase() });
+
+    if (!user) {
+      // Don't reveal if user exists or not for security
+      return res.status(200).json({ 
+        success: true, 
+        message: 'If that email exists in our system, a verification email has been sent.' 
+      });
+    }
+
+    if (user.IsVerified) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email is already verified. You can log in now.' 
+      });
+    }
+
+    // Generate new token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000 * 30); // 30 days
+    
+    user.VerificationToken = verificationToken;
+    user.VerificationTokenExpires = verificationTokenExpires;
+    await user.save();
+
+    // Send verification email
+    try {
+      await sendVerificationEmail(user.Email, verificationToken, user.FirstName);
+      console.log('✅ Verification email resent successfully to:', user.Email);
+    } catch (emailError) {
+      console.error('❌ Error sending verification email:', emailError);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to send verification email. Please try again later.' 
+      });
+    }
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Verification email has been resent. Please check your inbox.' 
+    });
+
+  } catch (error) {
+    console.error('Error resending verification email:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error while resending verification email' 
+    });
+  }
 };
