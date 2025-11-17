@@ -480,7 +480,7 @@ input:focus, textarea:focus {
 #foodLandingDiv input[type="number"] {
   width: 100%;
   padding: 10px 12px;
-  border: 2px solid var(--border);
+  border: 2px solid rgb(79, 62, 45);
   border-radius: 8px;
   font-size: 16px;
   font-family: var(--font);
@@ -490,7 +490,7 @@ input:focus, textarea:focus {
 #foodLandingDiv input[type="text"]:focus,
 #foodLandingDiv input[type="number"]:focus {
   outline: none;
-  border-color: var(--brand);
+  /* border-color: var(--brand); */
 }
 
 #foodLandingDiv .buttons {
@@ -541,7 +541,7 @@ input:focus, textarea:focus {
 }
 
 #foodLandingDiv .btn--danger {
-  background-color: var(--danger);
+  background-color: #e11d48;;
   color: white;
   border: none;
   border-radius: 8px;
@@ -552,5 +552,5 @@ input:focus, textarea:focus {
 }
 
 #foodLandingDiv .btn--danger:hover {
-  background-color: var(--danger-hover);
+  background-color: #b31239;
 }

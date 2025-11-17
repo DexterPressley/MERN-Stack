@@ -77,6 +77,10 @@ const FoodLanding: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
+  // For custome delete modal
+  const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
+  const [foodToDelete, setFoodToDelete] = useState<number | null>(null);
+
   const userName = getUserName();
 
   const filteredFoods = useMemo<Food[]>(() => {
@@ -228,24 +232,28 @@ const FoodLanding: React.FC = () => {
     }
   }
 
+  // Show confirmation modal
+  function confirmDelete(foodId: number): void {
+    setFoodToDelete(foodId);
+    setShowDeleteModal(true);
+  }
+
   // DELETE /api/users/:userId/foods/:foodId
-  async function handleDelete(foodId: number): Promise<void> {
+  async function handleDelete(): Promise<void> {
+    if (!foodToDelete) return;
+
     const { token, userId } = getAuth();
     if (!token || !userId) {
       setError("Missing auth: userId or token not found (check localStorage).");
       return;
     }
 
-    // * GET RID OF POP UP WINDOW FROM CHROME, MAKE CUSTOM WINDOW LATER *
-    const ok = window.confirm("Delete this food entry?");
-    if (!ok) return;
-
     try {
       setLoading(true);
       setError("");
 
       const res = await fetch(
-        `${API_BASE_URL}/users/${userId}/foods/${foodId}`,
+        `${API_BASE_URL}/users/${userId}/foods/${foodToDelete}`,
         {
           method: "DELETE",
           headers: {
@@ -263,7 +271,9 @@ const FoodLanding: React.FC = () => {
         throw new Error(msg);
       }
 
-      setFoods((prev) => prev.filter((f) => f.foodId !== foodId));
+      setFoods((prev) => prev.filter((f) => f.foodId !== foodToDelete));
+      setShowDeleteModal(false);
+      setFoodToDelete(null);
     } catch (err) {
       console.error(err);
       setError(
@@ -274,6 +284,12 @@ const FoodLanding: React.FC = () => {
     } finally {
       setLoading(false);
     }
+  }
+
+  // Cancel deletion
+  function cancelDelete(): void {
+    setShowDeleteModal(false);
+    setFoodToDelete(null);
   }
 
   function handleLogout(): void {
@@ -305,9 +321,9 @@ const FoodLanding: React.FC = () => {
           <p style={{ color: "var(--muted)", marginTop: "0.3rem", marginBottom: "0.5rem" }}>
             Search, add, and delete foods for your daily log.
           </p>
-          <div style={{ 
-            fontSize: "1.2rem", 
-            fontWeight: 600, 
+          <div style={{
+            fontSize: "1.2rem",
+            fontWeight: 600,
             color: "var(--brand)",
             marginTop: "0.5rem"
           }}>
@@ -315,93 +331,102 @@ const FoodLanding: React.FC = () => {
           </div>
         </div>
 
-        {/* Search Section */}
-        <div style={{ marginBottom: "1.5rem" }}>
-          <label htmlFor="food-search" style={{ fontWeight: 600, color: "var(--muted)" }}>
-            Search Foods
-          </label>
-          <input
-            id="food-search"
-            type="text"
-            placeholder="e.g. chicken, rice, apple..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: "100%",
-              marginTop: "0.5rem",
-              padding: "10px 12px",
-              border: "2px solid var(--border)",
-              borderRadius: "8px",
-              fontSize: "16px",
-            }}
-          />
-          <p style={{ marginTop: "0.4rem", fontSize: "0.85rem", color: "var(--muted)" }}>
-            Filter your food entries by name
-          </p>
+        {/* Search and Add Food - Side by Side */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "1.5rem",
+          marginBottom: "1.5rem"
+        }}>
+          {/* Search Section */}
+          <div>
+            <label htmlFor="food-search" style={{ fontWeight: 600, color: "var(--muted)" }}>
+              Search Foods
+            </label>
+            <input
+              id="food-search"
+              type="text"
+              placeholder="e.g. chicken, rice, apple..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: "100%",
+                marginTop: "0.5rem",
+                padding: "10px 12px",
+                border: "2px solid var(--border)",
+                borderRadius: "8px",
+                fontSize: "16px",
+              }}
+            />
+            <p style={{ marginTop: "0.4rem", fontSize: "0.85rem", color: "var(--muted)" }}>
+              Filter your food entries by name
+            </p>
+          </div>
+
+          {/* Add Food Form */}
+          <form onSubmit={handleAdd}>
+            <h2 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "1rem", color: "var(--text)" }}>
+              Add Food Entry
+            </h2>
+
+            <label htmlFor="food-name" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
+              Food Name
+            </label>
+            <input
+              id="food-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Banana"
+              style={{
+                width: "100%",
+                marginTop: "0.3rem",
+                marginBottom: "0.8rem",
+                padding: "8px 10px",
+                border: "2px solid var(--border)",
+                borderRadius: "8px",
+                fontSize: "14px",
+              }}
+            />
+
+            <label htmlFor="food-calories" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
+              Calories
+            </label>
+            <input
+              id="food-calories"
+              type="number"
+              min={0}
+              value={calories}
+              onChange={(e) => setCalories(e.target.value)}
+              placeholder="105"
+              style={{
+                width: "100%",
+                marginTop: "0.3rem",
+                marginBottom: "0.8rem",
+                padding: "8px 10px",
+                border: "2px solid var(--border)",
+                borderRadius: "8px",
+                fontSize: "14px",
+              }}
+            />
+
+            <button
+              type="submit"
+              disabled={!name.trim() || !calories.trim()}
+              className="buttons"
+              style={{
+                width: "100%",
+                padding: "10px",
+                backgroundColor: !name.trim() || !calories.trim() ? "#ccc" : "#2d5016",
+                cursor: !name.trim() || !calories.trim() ? "not-allowed" : "pointer",
+                opacity: !name.trim() || !calories.trim() ? 0.6 : 1,
+                fontSize: "14px",
+              }}
+            >
+              Add Food
+            </button>
+          </form>
         </div>
-
-        {/* Add Food Form */}
-        <form onSubmit={handleAdd} style={{ marginBottom: "1.5rem" }}>
-          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "1rem", color: "var(--text)" }}>
-            Add Food Entry
-          </h2>
-
-          <label htmlFor="food-name" style={{ fontWeight: 600, color: "var(--muted)" }}>
-            Food Name
-          </label>
-          <input
-            id="food-name"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Banana"
-            style={{
-              width: "100%",
-              marginTop: "0.5rem",
-              marginBottom: "1rem",
-              padding: "10px 12px",
-              border: "2px solid var(--border)",
-              borderRadius: "8px",
-              fontSize: "16px",
-            }}
-          />
-
-          <label htmlFor="food-calories" style={{ fontWeight: 600, color: "var(--muted)" }}>
-            Calories
-          </label>
-          <input
-            id="food-calories"
-            type="number"
-            min={0}
-            value={calories}
-            onChange={(e) => setCalories(e.target.value)}
-            placeholder="105"
-            style={{
-              width: "100%",
-              marginTop: "0.5rem",
-              marginBottom: "1rem",
-              padding: "10px 12px",
-              border: "2px solid var(--border)",
-              borderRadius: "8px",
-              fontSize: "16px",
-            }}
-          />
-
-          <button
-            type="submit"
-            disabled={!name.trim() || !calories.trim()}
-            className="buttons"
-            style={{
-              width: "100%",
-              padding: "12px",
-              backgroundColor: !name.trim() || !calories.trim() ? "#ccc" : "#2d5016",
-              cursor: !name.trim() || !calories.trim() ? "not-allowed" : "pointer",
-              opacity: !name.trim() || !calories.trim() ? 0.6 : 1,
-            }}
-          >
-            Add Food
-          </button>
-        </form>
 
         {/* Status Messages */}
         {error && (
@@ -426,10 +451,10 @@ const FoodLanding: React.FC = () => {
               No foods to show yet. Add your first entry above.
             </p>
           ) : (
-            <div style={{ 
-              border: "1px solid var(--border)", 
-              borderRadius: "10px", 
-              overflow: "hidden" 
+            <div style={{
+              border: "1px solid var(--border)",
+              borderRadius: "10px",
+              overflow: "hidden"
             }}>
               <table className="table" style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
@@ -451,7 +476,7 @@ const FoodLanding: React.FC = () => {
                       <td style={{ padding: "12px", textAlign: "center" }}>
                         <button
                           type="button"
-                          onClick={() => void handleDelete(food.foodId)}
+                          onClick={() => void confirmDelete(food.foodId)}
                           className="btn btn--danger"
                           style={{ fontSize: "0.85rem", padding: "6px 12px" }}
                         >
@@ -465,6 +490,86 @@ const FoodLanding: React.FC = () => {
             </div>
           )}
         </section>
+
+        {/* Custom Delete Confirmation Modal */}
+        {showDeleteModal && (
+          <div style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000,
+          }}>
+            <div style={{
+              backgroundColor: "var(--card)",
+              borderRadius: "12px",
+              padding: "2rem",
+              maxWidth: "400px",
+              width: "90%",
+              boxShadow: "0 8px 24px rgba(0, 0, 0, 0.3)",
+            }}>
+              <h3 style={{
+                marginTop: 0,
+                marginBottom: "1rem",
+                color: "var(--text)",
+                fontSize: "1.2rem",
+                fontWeight: 600
+              }}>
+                Delete Food Entry?
+              </h3>
+              <p style={{
+                marginBottom: "1.5rem",
+                color: "var(--muted)",
+                fontSize: "0.95rem"
+              }}>
+                Are you sure you want to delete this food entry? This action cannot be undone.
+              </p>
+              <div style={{
+                display: "flex",
+                gap: "1rem",
+                justifyContent: "flex-end"
+              }}>
+                <button
+                  type="button"
+                  onClick={cancelDelete}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    border: "1px solid var(--border)",
+                    backgroundColor: "white",
+                    color: "var(--text)",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  style={{
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    border: "none",
+                    backgroundColor: "#e11d48",
+                    color: "white",
+                    fontSize: "14px",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                  }}
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
