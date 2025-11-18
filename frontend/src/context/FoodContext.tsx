@@ -135,7 +135,7 @@ export function FoodProvider({ children }: { children: React.ReactNode }) {
     (Object.keys(meals) as MealType[]).forEach((m) => {
       const mealItems = meals[m];
       if (mealItems && Array.isArray(mealItems) && mealItems.length > 0) {
-        mealItems.forEach(i => { 
+        mealItems.forEach((i: FoodItem) => { 
           p += Number(i.protein) || 0;
           c += Number(i.carbs) || 0;
           f += Number(i.fats) || 0;
@@ -194,7 +194,7 @@ export function FoodProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  async function removeFoodFromMeal(meal: MealType, entryId: string) {
+  async function removeFoodFromMeal(_meal: MealType, entryId: string) {
     //debugging
     console.log('🗑️ Attempting to delete entryId:', entryId); // ADD THIS
     if (!currentDayId) {

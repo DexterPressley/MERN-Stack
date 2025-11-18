@@ -1,5 +1,4 @@
 // src/components/MacroProgressBar.tsx
-import React from "react";
 import { useFoodOptional } from "../context/FoodContext";
 
 export default function MacroProgressBar() {
@@ -72,4 +71,3 @@ export default function MacroProgressBar() {
     </section>
   );
 }
-

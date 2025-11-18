@@ -22,6 +22,7 @@ exports.getFoods = async (req, res) => {
         FatPerUnit: 1,
         Unit: 1, 
         UPC: 1, 
+        CreatedAt: 1, 
         _id: 0 
       })
       .lean();

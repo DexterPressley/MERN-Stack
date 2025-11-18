@@ -1,6 +1,8 @@
 // frontend/src/api/foodApi.ts
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = import.meta.env.PROD 
+  ? 'https://colorsdigitalocean.xyz/api'  // Production API
+  : 'http://localhost:3001/api';           // Local development
 
 export interface FoodItem {
   id: string;
@@ -207,31 +209,31 @@ export async function addMealEntry(
 
 // Delete a meal entry
 export async function deleteMealEntry(
-  dayId: number,
-  entryId: string
-): Promise<boolean> {
-  try {
-    const userId = getUserId();
-    const token = getAuthToken();
-    
-    if (!userId || !token) {
-      console.error('Missing userId or token');
+    dayId: number,
+    entryId: string
+  ): Promise<boolean> {
+    try {
+      const userId = getUserId();
+      const token = getAuthToken();
+      
+      if (!userId || !token) {
+        console.error('Missing userId or token');
+        return false;
+      }
+      
+      const response = await fetch(`${API_BASE}/users/${userId}/days/${dayId}/entries/${entryId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
+      return response.ok;
+    } catch (error) {
+      console.error('Error deleting entry:', error);
       return false;
     }
-    
-    const response = await fetch(`${API_BASE}/users/${userId}/days/${dayId}/entries/${entryId}`, {
-      method: 'DELETE',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    
-    return response.ok;
-  } catch (error) {
-    console.error('Error deleting entry:', error);
-    return false;
   }
-}
 
 // Get user's goals
 export async function getUserGoals(): Promise<{ calories: number; protein: number; carbs: number; fat: number }> {

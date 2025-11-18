@@ -150,7 +150,7 @@ function Login() {
           type="submit"
           id="loginButton"
           className="buttons"
-          value="Do It"
+          value="Login"
           onClick={doLogin}
         />
         <span id="loginResult">{message}</span>

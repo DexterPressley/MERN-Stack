@@ -427,3 +427,130 @@ input:focus, textarea:focus {
 #signUpButton:active {
   transform: translateY(1px);
 }
+
+/* ============================
+   Food Landing Page Styling
+============================ */
+
+#foodLandingDiv {
+  width: 100%;
+  max-width: 100%;
+}
+
+#foodLandingDiv .header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+#foodLandingDiv #inner-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+
+#foodLandingDiv .btn-back {
+  padding: 8px 16px;
+  background-color: #2d5016;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: var(--font);
+}
+
+#foodLandingDiv .btn-back:hover {
+  background-color: #3d6b1f;
+}
+
+#foodLandingDiv label {
+  display: block;
+  font-weight: 600;
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 0.5rem;
+}
+
+#foodLandingDiv input[type="text"],
+#foodLandingDiv input[type="number"] {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid rgb(79, 62, 45);
+  border-radius: 8px;
+  font-size: 16px;
+  font-family: var(--font);
+  background: white;
+}
+
+#foodLandingDiv input[type="text"]:focus,
+#foodLandingDiv input[type="number"]:focus {
+  outline: none;
+  border-color: rgb(79, 62, 45);
+}
+
+#foodLandingDiv .buttons {
+  width: 100%;
+  padding: 12px;
+  background-color: #2d5016;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-family: var(--font);
+}
+
+#foodLandingDiv .buttons:hover:not(:disabled) {
+  background-color: #3d6b1f;
+}
+
+#foodLandingDiv .buttons:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+#foodLandingDiv .table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#foodLandingDiv .table thead {
+  background-color: #f7f1d8;
+}
+
+#foodLandingDiv .table th,
+#foodLandingDiv .table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+#foodLandingDiv .table tbody tr:nth-child(odd) {
+  background-color: #fbf7e6;
+}
+
+#foodLandingDiv .table tbody tr:hover {
+  background-color: #f3e9cf;
+}
+
+#foodLandingDiv .btn--danger {
+  background-color: #e11d48;;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+#foodLandingDiv .btn--danger:hover {
+  background-color: #b31239;
+}

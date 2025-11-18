@@ -149,6 +149,47 @@ exports.login = async (req, res) => {
     return res.status(500).json({ error: 'server error' });
   }
 };
+// Get user profile with goals
+exports.getUser = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const user = await User.findOne({ UserID: parseInt(userId) })
+      .select('-Password -VerificationToken -VerificationTokenExpires -ResetPasswordToken -ResetPasswordExpires')
+      .lean();
+
+    if (!user) {
+      return res.status(404).json({ 
+        success: false,
+        error: 'User not found' 
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: {
+        userId: user.UserID,
+        firstName: user.FirstName,
+        lastName: user.LastName,
+        username: user.Username,
+        email: user.Email,
+        calorieGoal: user.CalorieGoal,
+        proteinGoal: user.ProteinGoal,
+        carbsGoal: user.CarbsGoal,
+        fatGoal: user.FatGoal,
+        dayRolloverTime: user.DayRolloverTime,
+        isVerified: user.IsVerified,
+        createdAt: user.CreatedAt
+      }
+    });
+  } catch (e) {
+    console.error('Get user error:', e);
+    return res.status(500).json({ 
+      success: false,
+      error: 'Server error retrieving user' 
+    });
+  }
+};
 
 // Get user info
 exports.getUserInfo = async (req, res) => {
@@ -513,6 +554,69 @@ exports.resetPassword = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Server error during password reset'
+    });
+  }
+};
+
+exports.resendVerificationEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email is required' 
+      });
+    }
+
+    // Use consistent field names (PascalCase to match your schema)
+    const user = await User.findOne({ Email: email.toLowerCase() });
+
+    if (!user) {
+      // Don't reveal if user exists or not for security
+      return res.status(200).json({ 
+        success: true, 
+        message: 'If that email exists in our system, a verification email has been sent.' 
+      });
+    }
+
+    if (user.IsVerified) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Email is already verified. You can log in now.' 
+      });
+    }
+
+    // Generate new token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000 * 30); // 30 days
+    
+    user.VerificationToken = verificationToken;
+    user.VerificationTokenExpires = verificationTokenExpires;
+    await user.save();
+
+    // Send verification email
+    try {
+      await sendVerificationEmail(user.Email, verificationToken, user.FirstName);
+      console.log('✅ Verification email resent successfully to:', user.Email);
+    } catch (emailError) {
+      console.error('❌ Error sending verification email:', emailError);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Failed to send verification email. Please try again later.' 
+      });
+    }
+
+    return res.status(200).json({ 
+      success: true, 
+      message: 'Verification email has been resent. Please check your inbox.' 
+    });
+
+  } catch (error) {
+    console.error('Error resending verification email:', error);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error while resending verification email' 
     });
   }
 };
