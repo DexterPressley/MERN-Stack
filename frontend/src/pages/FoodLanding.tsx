@@ -4,17 +4,17 @@ import React, { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { retrieveToken } from "../tokenStorage";
 
-interface Food {
-  foodId: number;
-  name: string;
-  caloriesPerUnit: number;
-  proteinPerUnit: number;
-  carbsPerUnit: number;
-  fatPerUnit: number;
-  unit: string;
-  upc?: string | null;
-  createdAt?: string;
-}
+// interface Food {
+//   foodId: number;
+//   name: string;
+//   caloriesPerUnit: number;
+//   proteinPerUnit: number;
+//   carbsPerUnit: number;
+//   fatPerUnit: number;
+//   unit: string;
+//   upc?: string | null;
+//   createdAt?: string;
+// }
 
 interface Entry {
   entryId: string;
@@ -88,11 +88,16 @@ function formatDate(dateString?: string): string {
 
 const FoodLanding: React.FC = () => {
   const [entries, setEntries] = useState<Entry[]>([]);
-  const [foods, setFoods] = useState<Food[]>([]);
   const [search, setSearch] = useState<string>("");
-  const [selectedFoodId, setSelectedFoodId] = useState<string>("");
-  const [amount, setAmount] = useState<string>("");
+  
+  // Manual entry fields
+  const [name, setName] = useState<string>("");
+  const [calories, setCalories] = useState<string>("");
+  const [protein, setProtein] = useState<string>("");
+  const [carbs, setCarbs] = useState<string>("");
+  const [fat, setFat] = useState<string>("");
   const [mealType, setMealType] = useState<string>("Breakfast");
+  
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
   const [currentDayId, setCurrentDayId] = useState<number | null>(null);
@@ -190,47 +195,6 @@ const FoodLanding: React.FC = () => {
     }
   }
 
-  // GET /api/users/:userId/foods (for the dropdown)
-  async function fetchFoods(): Promise<void> {
-    const { token, userId } = getAuth();
-    if (!token || !userId) {
-      setError("Missing auth: userId or token not found (check localStorage).");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/users/${userId}/foods`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to load foods");
-      }
-
-      const body = await res.json();
-      const results = body.results ?? [];
-
-      const mapped: Food[] = results.map((f: any) => ({
-        foodId: f.FoodID,
-        name: f.Name,
-        caloriesPerUnit: f.CaloriesPerUnit,
-        proteinPerUnit: f.ProteinPerUnit,
-        carbsPerUnit: f.CarbsPerUnit,
-        fatPerUnit: f.FatPerUnit,
-        unit: f.Unit,
-        upc: f.UPC ?? null,
-        createdAt: f.CreatedAt ?? undefined,
-      }));
-
-      setFoods(mapped);
-    } catch (err) {
-      console.error(err);
-    }
-  }
-
   // GET today's entries
   async function fetchEntries(): Promise<void> {
     const { token, userId } = getAuth();
@@ -305,7 +269,6 @@ const FoodLanding: React.FC = () => {
       if (dayId) {
         setCurrentDayId(dayId);
       }
-      await fetchFoods(); // Load food library for dropdown
     }
     void init();
   }, []);
@@ -316,7 +279,7 @@ const FoodLanding: React.FC = () => {
     }
   }, [currentDayId]);
 
-  // POST /api/users/:userId/days/:dayId/entries
+  // POST - Create food first, then add entry
   async function handleAdd(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     const { token, userId } = getAuth();
@@ -324,39 +287,77 @@ const FoodLanding: React.FC = () => {
       setError("Missing auth: userId or token not found (check localStorage).");
       return;
     }
-    if (!selectedFoodId || !amount.trim() || !currentDayId) return;
+    if (!name.trim() || !currentDayId) return;
 
     try {
       setLoading(true);
       setError("");
 
-      const res = await fetch(`${API_BASE_URL}/users/${userId}/days/${currentDayId}/entries`, {
+      // Step 1: Create the food in the database
+      const foodRes = await fetch(`${API_BASE_URL}/users/${userId}/foods`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          foodId: Number(selectedFoodId),
-          amount: Number(amount),
+          name: name.trim(),
+          caloriesPerUnit: Number(calories) || 0,
+          proteinPerUnit: Number(protein) || 0,
+          carbsPerUnit: Number(carbs) || 0,
+          fatPerUnit: Number(fat) || 0,
+          unit: "serving",
+          upc: null,
+        }),
+      });
+
+      if (!foodRes.ok) {
+        const body = await foodRes.json().catch(() => ({}));
+        const msg =
+          (body as { message?: string; error?: string }).message ||
+          (body as { message?: string; error?: string }).error ||
+          `Failed to create food (${foodRes.status})`;
+        throw new Error(msg);
+      }
+
+      const foodBody = await foodRes.json();
+      const newFoodId = foodBody.food?.foodId || foodBody.food?.FoodID;
+
+      if (!newFoodId) {
+        throw new Error("Failed to get food ID from response");
+      }
+
+      // Step 2: Create entry with the new food
+      const entryRes = await fetch(`${API_BASE_URL}/users/${userId}/days/${currentDayId}/entries`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          foodId: newFoodId,
+          amount: 1, // Default to 1 serving
           mealType: mealType,
         }),
       });
 
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        console.log("Add entry error response:", body);
+      if (!entryRes.ok) {
+        const body = await entryRes.json().catch(() => ({}));
         const msg =
           (body as { message?: string; error?: string }).message ||
           (body as { message?: string; error?: string }).error ||
-          `Failed to add entry (${res.status})`;
+          `Failed to add entry (${entryRes.status})`;
         throw new Error(msg);
       }
 
       await fetchEntries();
 
-      setSelectedFoodId("");
-      setAmount("");
+      // Clear form
+      setName("");
+      setCalories("");
+      setProtein("");
+      setCarbs("");
+      setFat("");
       setMealType("Breakfast");
     } catch (err) {
       console.error(err);
@@ -454,10 +455,10 @@ const FoodLanding: React.FC = () => {
         {/* Title and Totals */}
         <div style={{ marginBottom: "1.5rem" }}>
           <h1 style={{ fontSize: "1.9rem", fontWeight: 700, margin: 0, color: "var(--text)" }}>
-            Daily Food Tracker
+            Calorie Tracker
           </h1>
           <p style={{ color: "var(--muted)", marginTop: "0.3rem", marginBottom: "0.5rem" }}>
-            Track what you eat today
+            Search, add, and delete foods for your daily log.
           </p>
           
           {/* Totals Row */}
@@ -512,7 +513,7 @@ const FoodLanding: React.FC = () => {
           margin: "1.5rem 0"
         }}></div>
 
-        {/* Search and Add Entry - Side by Side */}
+        {/* Search and Add Food - Side by Side */}
         <div style={{
           display: "grid",
           gridTemplateColumns: "1fr auto 1fr",
@@ -523,13 +524,13 @@ const FoodLanding: React.FC = () => {
           {/* Search Section */}
           <div>
             <h2 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "1rem", color: "var(--text)" }}>
-              Search Entries
+              Search Foods
             </h2>
-            <label htmlFor="entry-search" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
+            <label htmlFor="food-search" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
               Food Name
             </label>
             <input
-              id="entry-search"
+              id="food-search"
               type="text"
               placeholder="e.g. chicken, rice, apple..."
               value={search}
@@ -545,32 +546,34 @@ const FoodLanding: React.FC = () => {
               }}
             />
             <p style={{ marginTop: "0.4rem", fontSize: "0.85rem", color: "var(--muted)" }}>
-              Filter your entries by food name
+              Filter your food entries by name
             </p>
           </div>
 
           {/* Vertical Divider */}
           <div style={{
-            width: "0px",
+            width: "1px",
             backgroundColor: "#6f4e37",
             alignSelf: "stretch",
             marginTop: "2.5rem",
             marginBottom: "0.5rem"
           }}></div>
 
-          {/* Add Entry Form */}
+          {/* Add Food Form */}
           <form onSubmit={handleAdd}>
             <h2 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "1rem", color: "var(--text)" }}>
               Add Food Entry
             </h2>
 
-            <label htmlFor="food-select" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
-              Select Food
+            <label htmlFor="food-name" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
+              Food Name
             </label>
-            <select
-              id="food-select"
-              value={selectedFoodId}
-              onChange={(e) => setSelectedFoodId(e.target.value)}
+            <input
+              id="food-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Banana"
               style={{
                 width: "100%",
                 marginTop: "0.3rem",
@@ -579,28 +582,82 @@ const FoodLanding: React.FC = () => {
                 border: "2px solid #6f4e37",
                 borderRadius: "8px",
                 fontSize: "14px",
-                backgroundColor: "white",
               }}
-            >
-              <option value="">-- Select a food --</option>
-              {foods.map((food) => (
-                <option key={food.foodId} value={food.foodId}>
-                  {food.name} ({food.caloriesPerUnit} cal per {food.unit})
-                </option>
-              ))}
-            </select>
+            />
 
-            <label htmlFor="entry-amount" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
-              Amount
+            <label htmlFor="food-calories" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
+              Calories
             </label>
             <input
-              id="entry-amount"
+              id="food-calories"
               type="number"
               min={0}
-              step="0.1"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="1.5"
+              value={calories}
+              onChange={(e) => setCalories(e.target.value)}
+              placeholder="105"
+              style={{
+                width: "100%",
+                marginTop: "0.3rem",
+                marginBottom: "0.8rem",
+                padding: "8px 10px",
+                border: "2px solid #6f4e37",
+                borderRadius: "8px",
+                fontSize: "14px",
+              }}
+            />
+
+            <label htmlFor="food-protein" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
+              Protein (g)
+            </label>
+            <input
+              id="food-protein"
+              type="number"
+              min={0}
+              value={protein}
+              onChange={(e) => setProtein(e.target.value)}
+              placeholder="3"
+              style={{
+                width: "100%",
+                marginTop: "0.3rem",
+                marginBottom: "0.8rem",
+                padding: "8px 10px",
+                border: "2px solid #6f4e37",
+                borderRadius: "8px",
+                fontSize: "14px",
+              }}
+            />
+
+            <label htmlFor="food-carbs" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
+              Carbs (g)
+            </label>
+            <input
+              id="food-carbs"
+              type="number"
+              min={0}
+              value={carbs}
+              onChange={(e) => setCarbs(e.target.value)}
+              placeholder="27"
+              style={{
+                width: "100%",
+                marginTop: "0.3rem",
+                marginBottom: "0.8rem",
+                padding: "8px 10px",
+                border: "2px solid #6f4e37",
+                borderRadius: "8px",
+                fontSize: "14px",
+              }}
+            />
+
+            <label htmlFor="food-fat" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
+              Fat (g)
+            </label>
+            <input
+              id="food-fat"
+              type="number"
+              min={0}
+              value={fat}
+              onChange={(e) => setFat(e.target.value)}
+              placeholder="0.4"
               style={{
                 width: "100%",
                 marginTop: "0.3rem",
@@ -638,18 +695,18 @@ const FoodLanding: React.FC = () => {
 
             <button
               type="submit"
-              disabled={!selectedFoodId || !amount.trim()}
+              disabled={!name.trim()}
               className="buttons"
               style={{
                 width: "100%",
                 padding: "10px",
-                backgroundColor: (!selectedFoodId || !amount.trim()) ? "#ccc" : "#2d5016",
-                cursor: (!selectedFoodId || !amount.trim()) ? "not-allowed" : "pointer",
-                opacity: (!selectedFoodId || !amount.trim()) ? 0.6 : 1,
+                backgroundColor: !name.trim() ? "#ccc" : "#2d5016",
+                cursor: !name.trim() ? "not-allowed" : "pointer",
+                opacity: !name.trim() ? 0.6 : 1,
                 fontSize: "14px",
               }}
             >
-              Add Entry
+              Add Food
             </button>
           </form>
         </div>
@@ -673,15 +730,15 @@ const FoodLanding: React.FC = () => {
           margin: "1.5rem 0"
         }}></div>
 
-        {/* Entries Table */}
+        {/* Foods Table */}
         <section>
           <h2 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "0.8rem", color: "var(--text)" }}>
-            Today's Entries ({filteredEntries.length})
+            Food Entries ({filteredEntries.length})
           </h2>
 
           {filteredEntries.length === 0 ? (
             <p style={{ fontSize: "0.9rem", color: "var(--muted)" }}>
-              No entries yet. Add your first entry above.
+              No foods to show yet. Add your first entry above.
             </p>
           ) : (
             <div style={{
@@ -694,13 +751,12 @@ const FoodLanding: React.FC = () => {
                   <thead>
                     <tr>
                       <th style={{ textAlign: "left", padding: "12px" }}>Food</th>
-                      <th style={{ textAlign: "center", padding: "12px" }}>Amount</th>
                       <th style={{ textAlign: "center", padding: "12px" }}>Meal</th>
                       <th style={{ textAlign: "center", padding: "12px" }}>Calories</th>
                       <th style={{ textAlign: "center", padding: "12px" }}>Protein (g)</th>
                       <th style={{ textAlign: "center", padding: "12px" }}>Carbs (g)</th>
                       <th style={{ textAlign: "center", padding: "12px" }}>Fat (g)</th>
-                      <th style={{ textAlign: "center", padding: "12px" }}>Time</th>
+                      <th style={{ textAlign: "center", padding: "12px" }}>Date Added</th>
                       <th style={{ textAlign: "center", padding: "12px", width: "100px" }}>Action</th>
                     </tr>
                   </thead>
@@ -708,7 +764,6 @@ const FoodLanding: React.FC = () => {
                     {filteredEntries.map((entry) => (
                       <tr key={entry.entryId}>
                         <td style={{ padding: "12px", fontWeight: 500 }}>{entry.foodName}</td>
-                        <td style={{ padding: "12px", textAlign: "center" }}>{entry.amount} {entry.unit}</td>
                         <td style={{ padding: "12px", textAlign: "center", fontSize: "0.85rem" }}>{entry.mealType}</td>
                         <td style={{ padding: "12px", textAlign: "center" }}>{entry.calories}</td>
                         <td style={{ padding: "12px", textAlign: "center", color: "var(--muted)" }}>{entry.protein}</td>
@@ -766,14 +821,14 @@ const FoodLanding: React.FC = () => {
                 fontSize: "1.2rem",
                 fontWeight: 600
               }}>
-                Delete Entry?
+                Delete Food Entry?
               </h3>
               <p style={{
                 marginBottom: "1.5rem",
                 color: "#6f4e37",
                 fontSize: "0.95rem"
               }}>
-                Are you sure you want to delete this entry? This will not delete the food from your library.
+                Are you sure you want to delete this food entry? This action cannot be undone.
               </p>
               <div style={{
                 display: "flex",
