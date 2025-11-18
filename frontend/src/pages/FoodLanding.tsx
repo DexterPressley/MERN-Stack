@@ -362,10 +362,13 @@ const FoodLanding: React.FC = () => {
           const body = await res.json();
           // Adjust based on your API response structure
           const foods = body.foods || body.results || body || [];
-          setAllFoods(foods);
+          // Ensure foods is an array and filter out any invalid entries
+          const validFoods = Array.isArray(foods) ? foods.filter(f => f && f.name && f.foodId) : [];
+          setAllFoods(validFoods);
         }
       } catch (err) {
         console.error("Error fetching foods:", err);
+        setAllFoods([]);
       }
     }
 
@@ -382,7 +385,7 @@ const FoodLanding: React.FC = () => {
 
     const query = foodSearchQuery.toLowerCase();
     const matches = allFoods.filter(food => 
-      food.name.toLowerCase().includes(query)
+      food && food.name && food.name.toLowerCase().includes(query)
     );
     
     setFilteredFoods(matches);
@@ -1117,7 +1120,7 @@ const FoodLanding: React.FC = () => {
                       zIndex: 1000,
                       boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
                     }}>
-                      {filteredFoods.map((food) => (
+                      {filteredFoods.filter(food => food && food.name).map((food) => (
                         <div
                           key={food.foodId}
                           onClick={() => handleFoodSelect(food)}
@@ -1139,13 +1142,13 @@ const FoodLanding: React.FC = () => {
                             color: "#2d5016",
                             marginBottom: "2px"
                           }}>
-                            {food.name}
+                            {food.name || "Unknown Food"}
                           </div>
                           <div style={{
                             fontSize: "0.8rem",
                             color: "#6f4e37"
                           }}>
-                            {food.caloriesPerUnit} cal • P: {food.proteinPerUnit}g • C: {food.carbsPerUnit}g • F: {food.fatPerUnit}g per {food.unit}
+                            {food.caloriesPerUnit || 0} cal • P: {food.proteinPerUnit || 0}g • C: {food.carbsPerUnit || 0}g • F: {food.fatPerUnit || 0}g per {food.unit || "serving"}
                           </div>
                         </div>
                       ))}
