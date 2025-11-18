@@ -23,13 +23,13 @@ interface Entry {
 }
 
 interface Food {
-  foodId: number;
-  name: string;
-  caloriesPerUnit: number;
-  proteinPerUnit: number;
-  carbsPerUnit: number;
-  fatPerUnit: number;
-  unit: string;
+  FoodID: number;
+  Name: string;
+  CaloriesPerUnit: number;
+  ProteinPerUnit: number;
+  CarbsPerUnit: number;
+  FatPerUnit: number;
+  Unit: string;
 }
 
 const APP_URL =
@@ -360,10 +360,11 @@ const FoodLanding: React.FC = () => {
 
         if (res.ok) {
           const body = await res.json();
-          // Adjust based on your API response structure
-          const foods = body.foods || body.results || body || [];
+          // API returns { success: true, results: [...], count: N }
+          const foods = body.results || [];
           // Ensure foods is an array and filter out any invalid entries
-          const validFoods = Array.isArray(foods) ? foods.filter(f => f && f.name && f.foodId) : [];
+          const validFoods = Array.isArray(foods) ? foods.filter(f => f && f.Name && f.FoodID) : [];
+          console.log('Loaded foods:', validFoods.length);
           setAllFoods(validFoods);
         }
       } catch (err) {
@@ -385,8 +386,12 @@ const FoodLanding: React.FC = () => {
 
     const query = foodSearchQuery.toLowerCase();
     const matches = allFoods.filter(food => 
-      food && food.name && food.name.toLowerCase().includes(query)
+      food && food.Name && typeof food.Name === 'string' && food.Name.toLowerCase().includes(query)
     );
+    
+    console.log('Search query:', query);
+    console.log('All foods count:', allFoods.length);
+    console.log('Matches found:', matches.length);
     
     setFilteredFoods(matches);
     setShowDropdown(matches.length > 0);
@@ -406,13 +411,13 @@ const FoodLanding: React.FC = () => {
 
   // Handle food selection from dropdown
   function handleFoodSelect(food: Food) {
-    setName(food.name);
-    setFoodSearchQuery(food.name);
-    setCalories(String(food.caloriesPerUnit));
-    setProtein(String(food.proteinPerUnit));
-    setCarbs(String(food.carbsPerUnit));
-    setFat(String(food.fatPerUnit));
-    setUnit(food.unit || "serving");
+    setName(food.Name);
+    setFoodSearchQuery(food.Name);
+    setCalories(String(food.CaloriesPerUnit));
+    setProtein(String(food.ProteinPerUnit));
+    setCarbs(String(food.CarbsPerUnit));
+    setFat(String(food.FatPerUnit));
+    setUnit(food.Unit || "serving");
     setShowDropdown(false);
   }
 
@@ -625,7 +630,7 @@ const FoodLanding: React.FC = () => {
   // Find existing food by name (case-insensitive)
   async function findExistingFood(foodName: string): Promise<Food | null> {
     const normalized = foodName.trim().toLowerCase();
-    const existing = allFoods.find(f => f.name.toLowerCase() === normalized);
+    const existing = allFoods.find(f => f.Name.toLowerCase() === normalized);
     return existing || null;
   }
 
@@ -650,7 +655,7 @@ const FoodLanding: React.FC = () => {
 
       if (existingFood) {
         // Use existing food
-        foodId = existingFood.foodId;
+        foodId = existingFood.FoodID;
       } else {
         // Create new food
         const foodRes = await fetch(`${API_BASE_URL}/users/${userId}/foods`, {
@@ -688,13 +693,13 @@ const FoodLanding: React.FC = () => {
 
         // Add to local cache
         const newFood: Food = {
-          foodId,
-          name: name.trim(),
-          caloriesPerUnit: Number(calories) || 0,
-          proteinPerUnit: Number(protein) || 0,
-          carbsPerUnit: Number(carbs) || 0,
-          fatPerUnit: Number(fat) || 0,
-          unit: unit || "serving",
+          FoodID: foodId,
+          Name: name.trim(),
+          CaloriesPerUnit: Number(calories) || 0,
+          ProteinPerUnit: Number(protein) || 0,
+          CarbsPerUnit: Number(carbs) || 0,
+          FatPerUnit: Number(fat) || 0,
+          Unit: unit || "serving",
         };
         setAllFoods(prev => [...prev, newFood]);
       }
@@ -1120,9 +1125,9 @@ const FoodLanding: React.FC = () => {
                       zIndex: 1000,
                       boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
                     }}>
-                      {filteredFoods.filter(food => food && food.name).map((food) => (
+                      {filteredFoods.filter(food => food && food.Name).map((food) => (
                         <div
-                          key={food.foodId}
+                          key={food.FoodID}
                           onClick={() => handleFoodSelect(food)}
                           style={{
                             padding: "10px 12px",
@@ -1142,13 +1147,13 @@ const FoodLanding: React.FC = () => {
                             color: "#2d5016",
                             marginBottom: "2px"
                           }}>
-                            {food.name || "Unknown Food"}
+                            {food.Name || "Unknown Food"}
                           </div>
                           <div style={{
                             fontSize: "0.8rem",
                             color: "#6f4e37"
                           }}>
-                            {food.caloriesPerUnit || 0} cal • P: {food.proteinPerUnit || 0}g • C: {food.carbsPerUnit || 0}g • F: {food.fatPerUnit || 0}g per {food.unit || "serving"}
+                            {food.CaloriesPerUnit || 0} cal • P: {food.ProteinPerUnit || 0}g • C: {food.CarbsPerUnit || 0}g • F: {food.FatPerUnit || 0}g per {food.Unit || "serving"}
                           </div>
                         </div>
                       ))}
