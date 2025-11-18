@@ -48,7 +48,7 @@ exports.register = async (req, res) => {
 
     // Get next UserID
     const lastUser = await User.findOne().sort({ UserID: -1 }).lean();
-    const nextUserId = lastUser ? lastUser.UserID + 1 : 1;
+    const nextUserId = lastUser ? lastUser.UserID + 1 : 0;
 
     // Generate verification token
     const verificationToken = crypto.randomBytes(32).toString('hex');
