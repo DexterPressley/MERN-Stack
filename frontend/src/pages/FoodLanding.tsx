@@ -1,6 +1,6 @@
 // src/pages/FoodLanding.tsx
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import type { FormEvent } from "react";
 import { retrieveToken } from "../tokenStorage";
 
@@ -20,6 +20,16 @@ interface Entry {
   carbs: number;
   fat: number;
   timestamp: string;
+}
+
+interface Food {
+  foodId: number;
+  name: string;
+  caloriesPerUnit: number;
+  proteinPerUnit: number;
+  carbsPerUnit: number;
+  fatPerUnit: number;
+  unit: string;
 }
 
 const APP_URL =
@@ -229,7 +239,7 @@ const MealSection: React.FC<{
                   color: "#6f4e37",
                   marginBottom: "0.25rem"
                 }}>
-                  {entry.calories} cal • P: {entry.protein}g • C: {entry.carbs}g • F: {entry.fat}g
+                  {entry.amount} {entry.unit} • {entry.calories} cal • P: {entry.protein}g • C: {entry.carbs}g • F: {entry.fat}g
                 </div>
                 <div style={{
                   fontSize: "0.75rem",
@@ -267,12 +277,22 @@ const FoodLanding: React.FC = () => {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [search, setSearch] = useState<string>("");
   
+  // Food search states
+  const [foodSearchQuery, setFoodSearchQuery] = useState<string>("");
+  const [allFoods, setAllFoods] = useState<Food[]>([]);
+  const [filteredFoods, setFilteredFoods] = useState<Food[]>([]);
+  const [showDropdown, setShowDropdown] = useState<boolean>(false);
+  const [selectedFood, setSelectedFood] = useState<Food | null>(null);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
   // Manual entry fields
   const [name, setName] = useState<string>("");
   const [calories, setCalories] = useState<string>("");
   const [protein, setProtein] = useState<string>("");
   const [carbs, setCarbs] = useState<string>("");
   const [fat, setFat] = useState<string>("");
+  const [amount, setAmount] = useState<string>("1");
+  const [unit, setUnit] = useState<string>("serving");
   const [mealType, setMealType] = useState<string>("Breakfast");
   
   const [loading, setLoading] = useState<boolean>(false);
@@ -324,6 +344,91 @@ const FoodLanding: React.FC = () => {
     };
     localStorage.setItem('nutrition_goals', JSON.stringify(goals));
   }, [calorieGoal, proteinGoal, carbsGoal, fatGoal]);
+
+  // Fetch all foods on mount
+  useEffect(() => {
+    async function fetchFoods() {
+      const { token, userId } = getAuth();
+      if (!token || !userId) return;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/users/${userId}/foods`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          const body = await res.json();
+          // Adjust based on your API response structure
+          const foods = body.foods || body.results || body || [];
+          setAllFoods(foods);
+        }
+      } catch (err) {
+        console.error("Error fetching foods:", err);
+      }
+    }
+
+    void fetchFoods();
+  }, []);
+
+  // Filter foods based on search query
+  useEffect(() => {
+    if (!foodSearchQuery.trim()) {
+      setFilteredFoods([]);
+      setShowDropdown(false);
+      return;
+    }
+
+    const query = foodSearchQuery.toLowerCase();
+    const matches = allFoods.filter(food => 
+      food.name.toLowerCase().includes(query)
+    );
+    
+    setFilteredFoods(matches);
+    setShowDropdown(matches.length > 0);
+  }, [foodSearchQuery, allFoods]);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Handle food selection from dropdown
+  function handleFoodSelect(food: Food) {
+    setSelectedFood(food);
+    setName(food.name);
+    setFoodSearchQuery(food.name);
+    setCalories(String(food.caloriesPerUnit));
+    setProtein(String(food.proteinPerUnit));
+    setCarbs(String(food.carbsPerUnit));
+    setFat(String(food.fatPerUnit));
+    setUnit(food.unit || "serving");
+    setShowDropdown(false);
+  }
+
+  // Handle manual food name input
+  function handleFoodNameChange(value: string) {
+    setName(value);
+    setFoodSearchQuery(value);
+    setSelectedFood(null);
+    
+    // Clear nutrition fields if user is typing fresh
+    if (!value.trim()) {
+      setCalories("");
+      setProtein("");
+      setCarbs("");
+      setFat("");
+    }
+  }
 
   // Open edit goals modal
   function openEditGoals(): void {
@@ -517,7 +622,14 @@ const FoodLanding: React.FC = () => {
     }
   }, [currentDayId]);
 
-  // POST - Create food first, then add entry
+  // Find existing food by name (case-insensitive)
+  async function findExistingFood(foodName: string): Promise<Food | null> {
+    const normalized = foodName.trim().toLowerCase();
+    const existing = allFoods.find(f => f.name.toLowerCase() === normalized);
+    return existing || null;
+  }
+
+  // POST - Create food or use existing, then add entry
   async function handleAdd(e: FormEvent<HTMLFormElement>): Promise<void> {
     e.preventDefault();
     const { token, userId } = getAuth();
@@ -531,39 +643,63 @@ const FoodLanding: React.FC = () => {
       setLoading(true);
       setError("");
 
-      const foodRes = await fetch(`${API_BASE_URL}/users/${userId}/foods`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
+      let foodId: number;
+
+      // Check if food already exists
+      const existingFood = await findExistingFood(name);
+
+      if (existingFood) {
+        // Use existing food
+        foodId = existingFood.foodId;
+      } else {
+        // Create new food
+        const foodRes = await fetch(`${API_BASE_URL}/users/${userId}/foods`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: name.trim(),
+            caloriesPerUnit: Number(calories) || 0,
+            proteinPerUnit: Number(protein) || 0,
+            carbsPerUnit: Number(carbs) || 0,
+            fatPerUnit: Number(fat) || 0,
+            unit: unit || "serving",
+            upc: null,
+          }),
+        });
+
+        if (!foodRes.ok) {
+          const body = await foodRes.json().catch(() => ({}));
+          const msg =
+            (body as { message?: string; error?: string }).message ||
+            (body as { message?: string; error?: string }).error ||
+            `Failed to create food (${foodRes.status})`;
+          throw new Error(msg);
+        }
+
+        const foodBody = await foodRes.json();
+        foodId = foodBody.food?.foodId || foodBody.food?.FoodID;
+
+        if (!foodId) {
+          throw new Error("Failed to get food ID from response");
+        }
+
+        // Add to local cache
+        const newFood: Food = {
+          foodId,
           name: name.trim(),
           caloriesPerUnit: Number(calories) || 0,
           proteinPerUnit: Number(protein) || 0,
           carbsPerUnit: Number(carbs) || 0,
           fatPerUnit: Number(fat) || 0,
-          unit: "serving",
-          upc: null,
-        }),
-      });
-
-      if (!foodRes.ok) {
-        const body = await foodRes.json().catch(() => ({}));
-        const msg =
-          (body as { message?: string; error?: string }).message ||
-          (body as { message?: string; error?: string }).error ||
-          `Failed to create food (${foodRes.status})`;
-        throw new Error(msg);
+          unit: unit || "serving",
+        };
+        setAllFoods(prev => [...prev, newFood]);
       }
 
-      const foodBody = await foodRes.json();
-      const newFoodId = foodBody.food?.foodId || foodBody.food?.FoodID;
-
-      if (!newFoodId) {
-        throw new Error("Failed to get food ID from response");
-      }
-
+      // Create entry with specified amount
       const entryRes = await fetch(`${API_BASE_URL}/users/${userId}/days/${currentDayId}/entries`, {
         method: "POST",
         headers: {
@@ -571,8 +707,8 @@ const FoodLanding: React.FC = () => {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          foodId: newFoodId,
-          amount: 1,
+          foodId: foodId,
+          amount: Number(amount) || 1,
           mealType: mealType,
         }),
       });
@@ -588,12 +724,17 @@ const FoodLanding: React.FC = () => {
 
       await fetchEntries();
 
+      // Reset form
       setName("");
+      setFoodSearchQuery("");
       setCalories("");
       setProtein("");
       setCarbs("");
       setFat("");
+      setAmount("1");
+      setUnit("serving");
       setMealType("Breakfast");
+      setSelectedFood(null);
     } catch (err) {
       console.error(err);
       setError(
@@ -797,7 +938,7 @@ const FoodLanding: React.FC = () => {
               onDelete={confirmDelete}
             />
             <MealSection
-              title="🍎 Snacks"
+              title="🎁 Snacks"
               entries={mealGroups.Snack}
               onDelete={confirmDelete}
             />
@@ -932,7 +1073,7 @@ const FoodLanding: React.FC = () => {
               )}
 
               <form onSubmit={handleAdd}>
-                <div style={{ marginBottom: "1rem" }}>
+                <div style={{ marginBottom: "1rem", position: "relative" }} ref={dropdownRef}>
                   <label htmlFor="food-name" style={{
                     display: "block",
                     marginBottom: "0.5rem",
@@ -946,9 +1087,15 @@ const FoodLanding: React.FC = () => {
                     id="food-name"
                     type="text"
                     value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="e.g., Grilled Chicken"
+                    onChange={(e) => handleFoodNameChange(e.target.value)}
+                    onFocus={() => {
+                      if (foodSearchQuery.trim() && filteredFoods.length > 0) {
+                        setShowDropdown(true);
+                      }
+                    }}
+                    placeholder="Type to search foods..."
                     required
+                    autoComplete="off"
                     style={{
                       width: "100%",
                       padding: "10px",
@@ -957,6 +1104,117 @@ const FoodLanding: React.FC = () => {
                       fontSize: "1rem"
                     }}
                   />
+                  
+                  {/* Dropdown for food search results */}
+                  {showDropdown && filteredFoods.length > 0 && (
+                    <div style={{
+                      position: "absolute",
+                      top: "100%",
+                      left: 0,
+                      right: 0,
+                      backgroundColor: "white",
+                      border: "2px solid #e0d8b8",
+                      borderTop: "none",
+                      borderRadius: "0 0 8px 8px",
+                      maxHeight: "200px",
+                      overflowY: "auto",
+                      zIndex: 1000,
+                      boxShadow: "0 4px 6px rgba(0,0,0,0.1)"
+                    }}>
+                      {filteredFoods.map((food) => (
+                        <div
+                          key={food.foodId}
+                          onClick={() => handleFoodSelect(food)}
+                          style={{
+                            padding: "10px 12px",
+                            cursor: "pointer",
+                            borderBottom: "1px solid #f5f5dc",
+                            transition: "background-color 0.15s"
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = "#f5f5dc";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = "white";
+                          }}
+                        >
+                          <div style={{
+                            fontWeight: 600,
+                            color: "#2d5016",
+                            marginBottom: "2px"
+                          }}>
+                            {food.name}
+                          </div>
+                          <div style={{
+                            fontSize: "0.8rem",
+                            color: "#6f4e37"
+                          }}>
+                            {food.caloriesPerUnit} cal • P: {food.proteinPerUnit}g • C: {food.carbsPerUnit}g • F: {food.fatPerUnit}g per {food.unit}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "0.75rem",
+                  marginBottom: "1rem"
+                }}>
+                  <div>
+                    <label htmlFor="amount" style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
+                      color: "#2d5016"
+                    }}>
+                      Amount
+                    </label>
+                    <input
+                      id="amount"
+                      type="number"
+                      min={0}
+                      step="0.1"
+                      value={amount}
+                      onChange={(e) => setAmount(e.target.value)}
+                      placeholder="1"
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        border: "2px solid #e0d8b8",
+                        borderRadius: "8px",
+                        fontSize: "1rem"
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="unit" style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
+                      color: "#2d5016"
+                    }}>
+                      Unit
+                    </label>
+                    <input
+                      id="unit"
+                      type="text"
+                      value={unit}
+                      onChange={(e) => setUnit(e.target.value)}
+                      placeholder="serving"
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        border: "2px solid #e0d8b8",
+                        borderRadius: "8px",
+                        fontSize: "1rem"
+                      }}
+                    />
+                  </div>
                 </div>
 
                 <div style={{
@@ -1098,7 +1356,7 @@ const FoodLanding: React.FC = () => {
                     <option value="Breakfast">🌅 Breakfast</option>
                     <option value="Lunch">🌞 Lunch</option>
                     <option value="Dinner">🌙 Dinner</option>
-                    <option value="Snack">🍎 Snack</option>
+                    <option value="Snack">🎁 Snack</option>
                   </select>
                 </div>
 
