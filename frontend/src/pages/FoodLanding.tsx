@@ -438,7 +438,7 @@ const FoodLanding: React.FC = () => {
   }
 
   return (
-    <div className="content-box" style={{ minWidth: "750px", maxWidth: "1000px" }}>
+    <div className="content-box" style={{ minWidth: "1000px", maxWidth: "1000px" }}>
       <div id="foodLandingDiv">
         {/* Header with welcome and logout */}
         <div className="header-row" style={{ marginBottom: "1.5rem" }}>
