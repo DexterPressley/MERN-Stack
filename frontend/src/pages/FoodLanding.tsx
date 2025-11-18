@@ -282,7 +282,6 @@ const FoodLanding: React.FC = () => {
   const [allFoods, setAllFoods] = useState<Food[]>([]);
   const [filteredFoods, setFilteredFoods] = useState<Food[]>([]);
   const [showDropdown, setShowDropdown] = useState<boolean>(false);
-  const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   
   // Manual entry fields
@@ -404,7 +403,6 @@ const FoodLanding: React.FC = () => {
 
   // Handle food selection from dropdown
   function handleFoodSelect(food: Food) {
-    setSelectedFood(food);
     setName(food.name);
     setFoodSearchQuery(food.name);
     setCalories(String(food.caloriesPerUnit));
@@ -419,7 +417,6 @@ const FoodLanding: React.FC = () => {
   function handleFoodNameChange(value: string) {
     setName(value);
     setFoodSearchQuery(value);
-    setSelectedFood(null);
     
     // Clear nutrition fields if user is typing fresh
     if (!value.trim()) {
@@ -734,7 +731,6 @@ const FoodLanding: React.FC = () => {
       setAmount("1");
       setUnit("serving");
       setMealType("Breakfast");
-      setSelectedFood(null);
     } catch (err) {
       console.error(err);
       setError(
