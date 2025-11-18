@@ -74,6 +74,9 @@ const FoodLanding: React.FC = () => {
   const [search, setSearch] = useState<string>("");
   const [name, setName] = useState<string>("");
   const [calories, setCalories] = useState<string>("");
+  const [protein, setProtein] = useState<string>("");
+  const [carbs, setCarbs] = useState<string>("");
+  const [fat, setFat] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>("");
 
@@ -182,7 +185,7 @@ const FoodLanding: React.FC = () => {
       setError("Missing auth: userId or token not found (check localStorage).");
       return;
     }
-    if (!name.trim() || !calories.trim()) return;
+    if (!name.trim() || !calories.trim() || !protein.trim() || !carbs.trim() || !fat.trim()) return;
 
     try {
       setLoading(true);
@@ -197,9 +200,9 @@ const FoodLanding: React.FC = () => {
         body: JSON.stringify({
           name: name.trim(),
           caloriesPerUnit: Number(calories),
-          proteinPerUnit: 0,
-          carbsPerUnit: 0,
-          fatPerUnit: 0,
+          proteinPerUnit: Number(protein),
+          carbsPerUnit: Number(carbs),
+          fatPerUnit: Number(fat),
           unit: "serving",
           upc: null,
         }),
@@ -220,6 +223,9 @@ const FoodLanding: React.FC = () => {
 
       setName("");
       setCalories("");
+      setProtein("");
+      setCarbs("");
+      setFat("");
     } catch (err) {
       console.error(err);
       setError(
@@ -404,7 +410,7 @@ const FoodLanding: React.FC = () => {
                 marginTop: "0.3rem",
                 marginBottom: "0.8rem",
                 padding: "8px 10px",
-                border: "2px solid rgb(79, 62, 45)",
+                border: "2px solid #6f4e37",
                 borderRadius: "8px",
                 fontSize: "14px",
               }}
@@ -425,7 +431,70 @@ const FoodLanding: React.FC = () => {
                 marginTop: "0.3rem",
                 marginBottom: "0.8rem",
                 padding: "8px 10px",
-                border: "2px solid rgb(79, 62, 45)",
+                border: "2px solid #6f4e37",
+                borderRadius: "8px",
+                fontSize: "14px",
+              }}
+            />
+
+            <label htmlFor="food-protein" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
+              Protein (g)
+            </label>
+            <input
+              id="food-protein"
+              type="number"
+              min={0}
+              value={protein}
+              onChange={(e) => setProtein(e.target.value)}
+              placeholder="3"
+              style={{
+                width: "100%",
+                marginTop: "0.3rem",
+                marginBottom: "0.8rem",
+                padding: "8px 10px",
+                border: "2px solid #6f4e37",
+                borderRadius: "8px",
+                fontSize: "14px",
+              }}
+            />
+
+            <label htmlFor="food-carbs" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
+              Carbs (g)
+            </label>
+            <input
+              id="food-carbs"
+              type="number"
+              min={0}
+              value={carbs}
+              onChange={(e) => setCarbs(e.target.value)}
+              placeholder="27"
+              style={{
+                width: "100%",
+                marginTop: "0.3rem",
+                marginBottom: "0.8rem",
+                padding: "8px 10px",
+                border: "2px solid #6f4e37",
+                borderRadius: "8px",
+                fontSize: "14px",
+              }}
+            />
+
+            <label htmlFor="food-fat" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
+              Fat (g)
+            </label>
+            <input
+              id="food-fat"
+              type="number"
+              min={0}
+              value={fat}
+              onChange={(e) => setFat(e.target.value)}
+              placeholder="0.4"
+              style={{
+                width: "100%",
+                marginTop: "0.3rem",
+                marginBottom: "0.8rem",
+                padding: "8px 10px",
+                border: "2px solid #6f4e37",
                 borderRadius: "8px",
                 fontSize: "14px",
               }}
@@ -433,14 +502,14 @@ const FoodLanding: React.FC = () => {
 
             <button
               type="submit"
-              disabled={!name.trim() || !calories.trim()}
+              disabled={!name.trim() || !calories.trim() || !protein.trim() || !carbs.trim() || !fat.trim()}
               className="buttons"
               style={{
                 width: "100%",
                 padding: "10px",
-                backgroundColor: !name.trim() || !calories.trim() ? "#ccc" : "#2d5016",
-                cursor: !name.trim() || !calories.trim() ? "not-allowed" : "pointer",
-                opacity: !name.trim() || !calories.trim() ? 0.6 : 1,
+                backgroundColor: (!name.trim() || !calories.trim() || !protein.trim() || !carbs.trim() || !fat.trim()) ? "#ccc" : "#2d5016",
+                cursor: (!name.trim() || !calories.trim() || !protein.trim() || !carbs.trim() || !fat.trim()) ? "not-allowed" : "pointer",
+                opacity: (!name.trim() || !calories.trim() || !protein.trim() || !carbs.trim() || !fat.trim()) ? 0.6 : 1,
                 fontSize: "14px",
               }}
             >
@@ -489,7 +558,10 @@ const FoodLanding: React.FC = () => {
                 <thead>
                   <tr>
                     <th style={{ textAlign: "left", padding: "12px" }}>Food</th>
-                    <th style={{ textAlign: "right", padding: "12px" }}>Calories</th>
+                    <th style={{ textAlign: "center", padding: "12px" }}>Calories</th>
+                    <th style={{ textAlign: "center", padding: "12px" }}>Protein (g)</th>
+                    <th style={{ textAlign: "center", padding: "12px" }}>Carbs (g)</th>
+                    <th style={{ textAlign: "center", padding: "12px" }}>Fat (g)</th>
                     <th style={{ textAlign: "center", padding: "12px" }}>Date Added</th>
                     <th style={{ textAlign: "center", padding: "12px", width: "100px" }}>Action</th>
                   </tr>
@@ -498,14 +570,17 @@ const FoodLanding: React.FC = () => {
                   {filteredFoods.map((food) => (
                     <tr key={food.foodId}>
                       <td style={{ padding: "12px", fontWeight: 500 }}>{food.name}</td>
-                      <td style={{ padding: "12px", textAlign: "right" }}>{food.caloriesPerUnit}</td>
+                      <td style={{ padding: "12px", textAlign: "center" }}>{food.caloriesPerUnit}</td>
+                      <td style={{ padding: "12px", textAlign: "center", color: "var(--muted)" }}>{food.proteinPerUnit}</td>
+                      <td style={{ padding: "12px", textAlign: "center", color: "var(--muted)" }}>{food.carbsPerUnit}</td>
+                      <td style={{ padding: "12px", textAlign: "center", color: "var(--muted)" }}>{food.fatPerUnit}</td>
                       <td style={{ padding: "12px", textAlign: "center", color: "var(--muted)", fontSize: "0.9rem" }}>
                         {formatDate(food.createdAt)}
                       </td>
                       <td style={{ padding: "12px", textAlign: "center" }}>
                         <button
                           type="button"
-                          onClick={() => void confirmDelete(food.foodId)}
+                          onClick={() => confirmDelete(food.foodId)}
                           className="btn btn--danger"
                           style={{ fontSize: "0.85rem", padding: "6px 12px" }}
                         >
