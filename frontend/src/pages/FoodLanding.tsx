@@ -101,6 +101,33 @@ const FoodLanding: React.FC = () => {
     [filteredFoods]
   );
 
+  const totalProtein = useMemo<number>(
+    () =>
+      filteredFoods.reduce(
+        (sum, f) => sum + (Number(f.proteinPerUnit) || 0),
+        0
+      ),
+    [filteredFoods]
+  );
+
+  const totalCarbs = useMemo<number>(
+    () =>
+      filteredFoods.reduce(
+        (sum, f) => sum + (Number(f.carbsPerUnit) || 0),
+        0
+      ),
+    [filteredFoods]
+  );
+
+  const totalFat = useMemo<number>(
+    () =>
+      filteredFoods.reduce(
+        (sum, f) => sum + (Number(f.fatPerUnit) || 0),
+        0
+      ),
+    [filteredFoods]
+  );
+
   useEffect(() => {
     void fetchFoods();
   }, []);
@@ -327,13 +354,48 @@ const FoodLanding: React.FC = () => {
           <p style={{ color: "var(--muted)", marginTop: "0.3rem", marginBottom: "0.5rem" }}>
             Search, add, and delete foods for your daily log.
           </p>
+          {/* Totals Row */}
           <div style={{
-            fontSize: "1.2rem",
-            fontWeight: 600,
-            color: "var(--brand)",
-            marginTop: "0.5rem"
+            display: "flex",
+            gap: "2rem",
+            marginTop: "1rem",
+            flexWrap: "wrap"
           }}>
-            Total Calories: {totalCalories} kcal
+            <div style={{
+              fontSize: "1.1rem",
+              fontWeight: 600,
+              color: "var(--brand)"
+            }}>
+              <span style={{ fontSize: "0.9rem", color: "var(--muted)", display: "block" }}>Total Calories</span>
+              {totalCalories} kcal
+            </div>
+
+            <div style={{
+              fontSize: "1.1rem",
+              fontWeight: 600,
+              color: "var(--brand)"
+            }}>
+              <span style={{ fontSize: "0.9rem", color: "var(--muted)", display: "block" }}>Total Protein</span>
+              {totalProtein} g
+            </div>
+
+            <div style={{
+              fontSize: "1.1rem",
+              fontWeight: 600,
+              color: "var(--brand)"
+            }}>
+              <span style={{ fontSize: "0.9rem", color: "var(--muted)", display: "block" }}>Total Carbs</span>
+              {totalCarbs} g
+            </div>
+
+            <div style={{
+              fontSize: "1.1rem",
+              fontWeight: 600,
+              color: "var(--brand)"
+            }}>
+              <span style={{ fontSize: "0.9rem", color: "var(--muted)", display: "block" }}>Total Fat</span>
+              {totalFat} g
+            </div>
           </div>
         </div>
 
