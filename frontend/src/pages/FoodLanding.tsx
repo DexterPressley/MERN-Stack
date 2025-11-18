@@ -4,18 +4,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import type { FormEvent } from "react";
 import { retrieveToken } from "../tokenStorage";
 
-// interface Food {
-//   foodId: number;
-//   name: string;
-//   caloriesPerUnit: number;
-//   proteinPerUnit: number;
-//   carbsPerUnit: number;
-//   fatPerUnit: number;
-//   unit: string;
-//   upc?: string | null;
-//   createdAt?: string;
-// }
-
 interface Entry {
   entryId: string;
   foodId: number;
@@ -36,7 +24,7 @@ interface Entry {
 
 const APP_URL =
   (import.meta.env.VITE_APP_URL as string | undefined) ||
-  "http://localhost:5000";
+  "http://localhost:3001";
 
 const API_BASE_URL = `${APP_URL.replace(/\/$/, "")}/api`;
 
@@ -83,8 +71,197 @@ function getUserName(): string {
 function formatDate(dateString?: string): string {
   if (!dateString) return new Date().toLocaleDateString('en-US');
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US');
+  return date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  });
 }
+
+// MacroProgressBar Component
+const MacroProgressBar: React.FC<{
+  label: string;
+  current: number;
+  goal: number;
+  color: string;
+}> = ({ label, current, goal, color }) => {
+  const percentage = goal > 0 ? Math.min((current / goal) * 100, 100) : 0;
+
+  return (
+    <div style={{ marginBottom: "1rem" }}>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        marginBottom: "0.5rem",
+        fontSize: "0.9rem"
+      }}>
+        <span style={{ fontWeight: 600, color: "#2d5016" }}>{label}</span>
+        <span style={{ color: "#6f4e37" }}>
+          {Math.round(current)} / {goal}g
+        </span>
+      </div>
+      <div style={{
+        height: "24px",
+        backgroundColor: "#e0d8b8",
+        borderRadius: "12px",
+        overflow: "hidden",
+        position: "relative"
+      }}>
+        <div style={{
+          height: "100%",
+          width: `${percentage}%`,
+          backgroundColor: color,
+          transition: "width 0.3s ease",
+          borderRadius: "12px"
+        }} />
+        <span style={{
+          position: "absolute",
+          top: "50%",
+          left: "50%",
+          transform: "translate(-50%, -50%)",
+          fontSize: "0.75rem",
+          fontWeight: 600,
+          color: percentage > 50 ? "white" : "#2d5016"
+        }}>
+          {Math.round(percentage)}%
+        </span>
+      </div>
+    </div>
+  );
+};
+
+// MealSection Component
+const MealSection: React.FC<{
+  title: string;
+  entries: Entry[];
+  onDelete: (entryId: string) => void;
+}> = ({ title, entries, onDelete }) => {
+  const totalCals = entries.reduce((sum, e) => sum + (Number(e.calories) || 0), 0);
+
+  return (
+    <div style={{
+      backgroundColor: "#f5f5dc",
+      border: "2px solid #e0d8b8",
+      borderRadius: "12px",
+      padding: "1.25rem",
+      marginBottom: "1rem"
+    }}>
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "1rem",
+        paddingBottom: "0.75rem",
+        borderBottom: "2px solid #e0d8b8"
+      }}>
+        <h3 style={{
+          margin: 0,
+          fontSize: "1.2rem",
+          fontWeight: 700,
+          color: "#2d5016"
+        }}>
+          {title}
+        </h3>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "0.5rem"
+        }}>
+          <span style={{
+            fontSize: "0.85rem",
+            color: "#6f4e37",
+            fontWeight: 500
+          }}>
+            {entries.length} {entries.length === 1 ? 'item' : 'items'}
+          </span>
+          <span style={{
+            padding: "4px 12px",
+            backgroundColor: "#2d5016",
+            color: "white",
+            borderRadius: "12px",
+            fontSize: "0.9rem",
+            fontWeight: 600
+          }}>
+            {totalCals} cal
+          </span>
+        </div>
+      </div>
+
+      {entries.length === 0 ? (
+        <div style={{
+          textAlign: "center",
+          padding: "2rem",
+          color: "#a0937d"
+        }}>
+          <p style={{
+            margin: 0,
+            fontSize: "0.9rem",
+            fontStyle: "italic"
+          }}>
+            No foods added yet
+          </p>
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          {entries.map((entry) => (
+            <div key={entry.entryId} style={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              padding: "1rem",
+              backgroundColor: "white",
+              borderRadius: "10px",
+              border: "1px solid #e0d8b8",
+              boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+            }}>
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontWeight: 700,
+                  color: "#2d5016",
+                  marginBottom: "0.5rem",
+                  fontSize: "1rem"
+                }}>
+                  {entry.foodName}
+                </div>
+                <div style={{
+                  fontSize: "0.85rem",
+                  color: "#6f4e37",
+                  marginBottom: "0.25rem"
+                }}>
+                  {entry.calories} cal • P: {entry.protein}g • C: {entry.carbs}g • F: {entry.fat}g
+                </div>
+                <div style={{
+                  fontSize: "0.75rem",
+                  color: "#a0937d",
+                  fontStyle: "italic"
+                }}>
+                  Added {formatDate(entry.timestamp)}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onDelete(entry.entryId)}
+                style={{
+                  padding: "8px 16px",
+                  borderRadius: "8px",
+                  border: "none",
+                  backgroundColor: "#e11d48",
+                  color: "white",
+                  fontSize: "0.85rem",
+                  fontWeight: 600,
+                  cursor: "pointer"
+                }}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 const FoodLanding: React.FC = () => {
   const [entries, setEntries] = useState<Entry[]>([]);
@@ -106,48 +283,111 @@ const FoodLanding: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false);
   const [entryToDelete, setEntryToDelete] = useState<string | null>(null);
 
+  // Goals - editable (stored in localStorage)
+  const [calorieGoal, setCalorieGoal] = useState<number>(2000);
+  const [proteinGoal, setProteinGoal] = useState<number>(150);
+  const [carbsGoal, setCarbsGoal] = useState<number>(200);
+  const [fatGoal, setFatGoal] = useState<number>(65);
+  const [isEditingGoals, setIsEditingGoals] = useState<boolean>(false);
+
+  // Temporary goals for editing
+  const [tempCalorieGoal, setTempCalorieGoal] = useState<string>("2000");
+  const [tempProteinGoal, setTempProteinGoal] = useState<string>("150");
+  const [tempCarbsGoal, setTempCarbsGoal] = useState<string>("200");
+  const [tempFatGoal, setTempFatGoal] = useState<string>("65");
+
   const userName = getUserName();
 
-  const filteredEntries = useMemo<Entry[]>(() => {
-    const term = search.trim().toLowerCase();
-    if (!term) return entries;
-    return entries.filter((e) => e.foodName.toLowerCase().includes(term));
+  // Load goals from localStorage on mount
+  useEffect(() => {
+    const savedGoals = localStorage.getItem('nutrition_goals');
+    if (savedGoals) {
+      try {
+        const goals = JSON.parse(savedGoals);
+        setCalorieGoal(goals.calories || 2000);
+        setProteinGoal(goals.protein || 150);
+        setCarbsGoal(goals.carbs || 200);
+        setFatGoal(goals.fat || 65);
+      } catch {
+        // Use defaults if parsing fails
+      }
+    }
+  }, []);
+
+  // Save goals to localStorage whenever they change
+  useEffect(() => {
+    const goals = {
+      calories: calorieGoal,
+      protein: proteinGoal,
+      carbs: carbsGoal,
+      fat: fatGoal
+    };
+    localStorage.setItem('nutrition_goals', JSON.stringify(goals));
+  }, [calorieGoal, proteinGoal, carbsGoal, fatGoal]);
+
+  // Open edit goals modal
+  function openEditGoals(): void {
+    setTempCalorieGoal(String(calorieGoal));
+    setTempProteinGoal(String(proteinGoal));
+    setTempCarbsGoal(String(carbsGoal));
+    setTempFatGoal(String(fatGoal));
+    setIsEditingGoals(true);
+  }
+
+  // Save edited goals
+  function saveGoals(): void {
+    const newCalories = Number(tempCalorieGoal) || 2000;
+    const newProtein = Number(tempProteinGoal) || 150;
+    const newCarbs = Number(tempCarbsGoal) || 200;
+    const newFat = Number(tempFatGoal) || 65;
+
+    setCalorieGoal(newCalories);
+    setProteinGoal(newProtein);
+    setCarbsGoal(newCarbs);
+    setFatGoal(newFat);
+    setIsEditingGoals(false);
+  }
+
+  // Cancel editing goals
+  function cancelEditGoals(): void {
+    setIsEditingGoals(false);
+  }
+
+  // Filter entries by search
+  const filteredEntries = useMemo(() => {
+    if (!search.trim()) return entries;
+    const term = search.toLowerCase();
+    return entries.filter(e => e.foodName.toLowerCase().includes(term));
   }, [entries, search]);
 
+  // Group filtered entries by meal type
+  const mealGroups = useMemo(() => {
+    return {
+      Breakfast: filteredEntries.filter(e => e.mealType === "Breakfast"),
+      Lunch: filteredEntries.filter(e => e.mealType === "Lunch"),
+      Dinner: filteredEntries.filter(e => e.mealType === "Dinner"),
+      Snack: filteredEntries.filter(e => e.mealType === "Snack"),
+    };
+  }, [filteredEntries]);
+
   const totalCalories = useMemo<number>(
-    () =>
-      filteredEntries.reduce(
-        (sum, e) => sum + (Number(e.calories) || 0),
-        0
-      ),
-    [filteredEntries]
+    () => entries.reduce((sum, e) => sum + (Number(e.calories) || 0), 0),
+    [entries]
   );
 
   const totalProtein = useMemo<number>(
-    () =>
-      filteredEntries.reduce(
-        (sum, e) => sum + (Number(e.protein) || 0),
-        0
-      ),
-    [filteredEntries]
+    () => entries.reduce((sum, e) => sum + (Number(e.protein) || 0), 0),
+    [entries]
   );
 
   const totalCarbs = useMemo<number>(
-    () =>
-      filteredEntries.reduce(
-        (sum, e) => sum + (Number(e.carbs) || 0),
-        0
-      ),
-    [filteredEntries]
+    () => entries.reduce((sum, e) => sum + (Number(e.carbs) || 0), 0),
+    [entries]
   );
 
   const totalFat = useMemo<number>(
-    () =>
-      filteredEntries.reduce(
-        (sum, e) => sum + (Number(e.fat) || 0),
-        0
-      ),
-    [filteredEntries]
+    () => entries.reduce((sum, e) => sum + (Number(e.fat) || 0), 0),
+    [entries]
   );
 
   // Get or create today's day
@@ -155,10 +395,9 @@ const FoodLanding: React.FC = () => {
     const { token, userId } = getAuth();
     if (!token || !userId) return null;
 
-    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+    const today = new Date().toISOString().split('T')[0];
 
     try {
-      // Try to get today's day
       const res = await fetch(`${API_BASE_URL}/users/${userId}/days?startDate=${today}&endDate=${today}`, {
         headers: {
           "Content-Type": "application/json",
@@ -173,7 +412,6 @@ const FoodLanding: React.FC = () => {
         }
       }
 
-      // If no day exists for today, create it
       const createRes = await fetch(`${API_BASE_URL}/users/${userId}/days`, {
         method: "POST",
         headers: {
@@ -293,7 +531,6 @@ const FoodLanding: React.FC = () => {
       setLoading(true);
       setError("");
 
-      // Step 1: Create the food in the database
       const foodRes = await fetch(`${API_BASE_URL}/users/${userId}/foods`, {
         method: "POST",
         headers: {
@@ -327,7 +564,6 @@ const FoodLanding: React.FC = () => {
         throw new Error("Failed to get food ID from response");
       }
 
-      // Step 2: Create entry with the new food
       const entryRes = await fetch(`${API_BASE_URL}/users/${userId}/days/${currentDayId}/entries`, {
         method: "POST",
         headers: {
@@ -336,7 +572,7 @@ const FoodLanding: React.FC = () => {
         },
         body: JSON.stringify({
           foodId: newFoodId,
-          amount: 1, // Default to 1 serving
+          amount: 1,
           mealType: mealType,
         }),
       });
@@ -352,7 +588,6 @@ const FoodLanding: React.FC = () => {
 
       await fetchEntries();
 
-      // Clear form
       setName("");
       setCalories("");
       setProtein("");
@@ -371,13 +606,11 @@ const FoodLanding: React.FC = () => {
     }
   }
 
-  // Show confirmation modal
   function confirmDelete(entryId: string): void {
     setEntryToDelete(entryId);
     setShowDeleteModal(true);
   }
 
-  // DELETE /api/users/:userId/days/:dayId/entries/:entryId
   async function handleDelete(): Promise<void> {
     if (!entryToDelete || !currentDayId) return;
 
@@ -425,7 +658,6 @@ const FoodLanding: React.FC = () => {
     }
   }
 
-  // Cancel deletion
   function cancelDelete(): void {
     setShowDeleteModal(false);
     setEntryToDelete(null);
@@ -438,360 +670,462 @@ const FoodLanding: React.FC = () => {
   }
 
   return (
-    <div className="content-box" style={{ minWidth: "1000px", maxWidth: "1000px" }}>
-      <div id="foodLandingDiv">
-        {/* Header with welcome and logout */}
-        <div className="header-row" style={{ marginBottom: "1.5rem" }}>
-          <span id="inner-title">Welcome, {userName}!</span>
+    <div style={{
+      minHeight: "100vh",
+      backgroundColor: "#faf8f3",
+      padding: "2rem"
+    }}>
+      <div style={{
+        maxWidth: "1400px",
+        margin: "0 auto"
+      }}>
+        <header style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "2rem",
+          padding: "1.5rem",
+          backgroundColor: "white",
+          borderRadius: "12px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+        }}>
+          <div>
+            <h1 style={{
+              fontSize: "2rem",
+              fontWeight: 700,
+              margin: 0,
+              color: "#2d5016"
+            }}>
+              Welcome back, {userName}! 👋
+            </h1>
+            <p style={{
+              color: "#6f4e37",
+              marginTop: "0.5rem",
+              fontSize: "1rem",
+              margin: "0.5rem 0 0 0"
+            }}>
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+          </div>
           <button
             type="button"
-            className="btn btn-back"
             onClick={handleLogout}
+            style={{
+              padding: "12px 24px",
+              borderRadius: "8px",
+              border: "2px solid #2d5016",
+              backgroundColor: "white",
+              color: "#2d5016",
+              fontSize: "1rem",
+              fontWeight: 600,
+              cursor: "pointer"
+            }}
           >
             Logout
           </button>
-        </div>
+        </header>
 
-        {/* Title and Totals */}
-        <div style={{ marginBottom: "1.5rem" }}>
-          <h1 style={{ fontSize: "1.9rem", fontWeight: 700, margin: 0, color: "var(--text)" }}>
-            Calorie Tracker
-          </h1>
-          <p style={{ color: "var(--muted)", marginTop: "0.3rem", marginBottom: "0.5rem" }}>
-            Search, add, and delete foods for your daily log.
-          </p>
-          
-          {/* Totals Row */}
-          <div style={{
-            display: "flex",
-            gap: "2rem",
-            marginTop: "1rem",
-            flexWrap: "wrap"
-          }}>
-            <div style={{
-              fontSize: "1.1rem",
-              fontWeight: 600,
-              color: "var(--brand)"
-            }}>
-              <span style={{ fontSize: "0.9rem", color: "var(--muted)", display: "block" }}>Total Calories</span>
-              {totalCalories} kcal
-            </div>
-
-            <div style={{
-              fontSize: "1.1rem",
-              fontWeight: 600,
-              color: "var(--brand)"
-            }}>
-              <span style={{ fontSize: "0.9rem", color: "var(--muted)", display: "block" }}>Total Protein</span>
-              {totalProtein} g
-            </div>
-
-            <div style={{
-              fontSize: "1.1rem",
-              fontWeight: 600,
-              color: "var(--brand)"
-            }}>
-              <span style={{ fontSize: "0.9rem", color: "var(--muted)", display: "block" }}>Total Carbs</span>
-              {totalCarbs} g
-            </div>
-
-            <div style={{
-              fontSize: "1.1rem",
-              fontWeight: 600,
-              color: "var(--brand)"
-            }}>
-              <span style={{ fontSize: "0.9rem", color: "var(--muted)", display: "block" }}>Total Fat</span>
-              {totalFat} g
-            </div>
-          </div>
-        </div>
-
-        {/* Horizontal Divider */}
         <div style={{
-          height: "1px",
-          backgroundColor: "#6f4e37",
-          margin: "1.5rem 0"
-        }}></div>
+          marginBottom: "2rem",
+          padding: "1.5rem",
+          backgroundColor: "white",
+          borderRadius: "12px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+        }}>
+          <label htmlFor="search-foods" style={{
+            display: "block",
+            marginBottom: "0.75rem",
+            fontSize: "1rem",
+            fontWeight: 600,
+            color: "#2d5016"
+          }}>
+            🔍 Search Your Foods
+          </label>
+          <input
+            id="search-foods"
+            type="text"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Type to filter foods by name..."
+            style={{
+              width: "100%",
+              padding: "12px 16px",
+              border: "2px solid #e0d8b8",
+              borderRadius: "8px",
+              fontSize: "1rem"
+            }}
+          />
+          {search && (
+            <p style={{
+              marginTop: "0.5rem",
+              fontSize: "0.9rem",
+              color: "#6f4e37"
+            }}>
+              Showing {filteredEntries.length} of {entries.length} foods
+            </p>
+          )}
+        </div>
 
-        {/* Search and Add Food - Side by Side */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "1fr auto 1fr",
-          gap: "1.5rem",
-          marginBottom: "1.5rem",
-          alignItems: "start"
+          gridTemplateColumns: "1fr 450px",
+          gap: "2rem"
         }}>
-          {/* Search Section */}
-          <div>
-            <h2 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "1rem", color: "var(--text)" }}>
-              Search Foods
-            </h2>
-            <label htmlFor="food-search" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
-              Food Name
-            </label>
-            <input
-              id="food-search"
-              type="text"
-              placeholder="e.g. chicken, rice, apple..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              style={{
-                width: "100%",
-                marginTop: "0.3rem",
-                marginBottom: "0.8rem",
-                padding: "8px 10px",
-                border: "2px solid #6f4e37",
-                borderRadius: "8px",
-                fontSize: "14px",
-              }}
-            />
-            <p style={{ marginTop: "0.4rem", fontSize: "0.85rem", color: "var(--muted)" }}>
-              Filter your food entries by name
-            </p>
-          </div>
-
-          {/* Vertical Divider */}
-          <div style={{
-            width: "0px",
-            backgroundColor: "#6f4e37",
-            alignSelf: "stretch",
-            marginTop: "2.5rem",
-            marginBottom: "0.5rem"
-          }}></div>
-
-          {/* Add Food Form */}
-          <form onSubmit={handleAdd}>
-            <h2 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "1rem", color: "var(--text)" }}>
-              Add Food Entry
+          <main>
+            <h2 style={{
+              fontSize: "1.5rem",
+              fontWeight: 700,
+              marginBottom: "1.5rem",
+              color: "#2d5016"
+            }}>
+              Today's Meals
             </h2>
 
-            <label htmlFor="food-name" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
-              Food Name
-            </label>
-            <input
-              id="food-name"
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Banana"
-              style={{
-                width: "100%",
-                marginTop: "0.3rem",
-                marginBottom: "0.8rem",
-                padding: "8px 10px",
-                border: "2px solid #6f4e37",
-                borderRadius: "8px",
-                fontSize: "14px",
-              }}
+            <MealSection
+              title="🌅 Breakfast"
+              entries={mealGroups.Breakfast}
+              onDelete={confirmDelete}
             />
-
-            <label htmlFor="food-calories" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
-              Calories
-            </label>
-            <input
-              id="food-calories"
-              type="number"
-              min={0}
-              value={calories}
-              onChange={(e) => setCalories(e.target.value)}
-              placeholder="105"
-              style={{
-                width: "100%",
-                marginTop: "0.3rem",
-                marginBottom: "0.8rem",
-                padding: "8px 10px",
-                border: "2px solid #6f4e37",
-                borderRadius: "8px",
-                fontSize: "14px",
-              }}
+            <MealSection
+              title="🌞 Lunch"
+              entries={mealGroups.Lunch}
+              onDelete={confirmDelete}
             />
-
-            <label htmlFor="food-protein" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
-              Protein (g)
-            </label>
-            <input
-              id="food-protein"
-              type="number"
-              min={0}
-              value={protein}
-              onChange={(e) => setProtein(e.target.value)}
-              placeholder="3"
-              style={{
-                width: "100%",
-                marginTop: "0.3rem",
-                marginBottom: "0.8rem",
-                padding: "8px 10px",
-                border: "2px solid #6f4e37",
-                borderRadius: "8px",
-                fontSize: "14px",
-              }}
+            <MealSection
+              title="🌙 Dinner"
+              entries={mealGroups.Dinner}
+              onDelete={confirmDelete}
             />
-
-            <label htmlFor="food-carbs" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
-              Carbs (g)
-            </label>
-            <input
-              id="food-carbs"
-              type="number"
-              min={0}
-              value={carbs}
-              onChange={(e) => setCarbs(e.target.value)}
-              placeholder="27"
-              style={{
-                width: "100%",
-                marginTop: "0.3rem",
-                marginBottom: "0.8rem",
-                padding: "8px 10px",
-                border: "2px solid #6f4e37",
-                borderRadius: "8px",
-                fontSize: "14px",
-              }}
+            <MealSection
+              title="🍎 Snacks"
+              entries={mealGroups.Snack}
+              onDelete={confirmDelete}
             />
+          </main>
 
-            <label htmlFor="food-fat" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
-              Fat (g)
-            </label>
-            <input
-              id="food-fat"
-              type="number"
-              min={0}
-              value={fat}
-              onChange={(e) => setFat(e.target.value)}
-              placeholder="0.4"
-              style={{
-                width: "100%",
-                marginTop: "0.3rem",
-                marginBottom: "0.8rem",
-                padding: "8px 10px",
-                border: "2px solid #6f4e37",
-                borderRadius: "8px",
-                fontSize: "14px",
-              }}
-            />
+          <aside>
+            <div style={{
+              backgroundColor: "white",
+              border: "2px solid #e0d8b8",
+              borderRadius: "12px",
+              padding: "1.5rem",
+              marginBottom: "2rem",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+            }}>
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: "1.5rem"
+              }}>
+                <h3 style={{
+                  margin: 0,
+                  fontSize: "1.3rem",
+                  fontWeight: 700,
+                  color: "#2d5016"
+                }}>
+                  📊 Daily Progress
+                </h3>
+                <button
+                  type="button"
+                  onClick={openEditGoals}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                    border: "2px solid #2d5016",
+                    backgroundColor: "white",
+                    color: "#2d5016",
+                    fontSize: "0.85rem",
+                    fontWeight: 600,
+                    cursor: "pointer"
+                  }}
+                >
+                  ⚙️ Edit Goals
+                </button>
+              </div>
 
-            <label htmlFor="meal-type" style={{ fontWeight: 600, color: "var(--muted)", fontSize: "0.9rem" }}>
-              Meal Type
-            </label>
-            <select
-              id="meal-type"
-              value={mealType}
-              onChange={(e) => setMealType(e.target.value)}
-              style={{
-                width: "100%",
-                marginTop: "0.3rem",
-                marginBottom: "0.8rem",
-                padding: "8px 10px",
-                border: "2px solid #6f4e37",
-                borderRadius: "8px",
-                fontSize: "14px",
-                backgroundColor: "white",
-              }}
-            >
-              <option value="Breakfast">Breakfast</option>
-              <option value="Lunch">Lunch</option>
-              <option value="Dinner">Dinner</option>
-              <option value="Snack">Snack</option>
-            </select>
+              <div style={{
+                marginBottom: "1.5rem",
+                padding: "1.5rem",
+                backgroundColor: "#f5f5dc",
+                borderRadius: "12px",
+                textAlign: "center"
+              }}>
+                <div style={{
+                  fontSize: "3rem",
+                  fontWeight: 700,
+                  color: "#2d5016",
+                  lineHeight: 1
+                }}>
+                  {totalCalories}
+                </div>
+                <div style={{
+                  fontSize: "1rem",
+                  color: "#6f4e37",
+                  marginTop: "0.25rem"
+                }}>
+                  of {calorieGoal} calories
+                </div>
+                <div style={{
+                  marginTop: "0.75rem",
+                  padding: "4px 12px",
+                  backgroundColor: totalCalories > calorieGoal ? "#e11d48" : "#16a34a",
+                  color: "white",
+                  borderRadius: "12px",
+                  display: "inline-block",
+                  fontSize: "0.85rem",
+                  fontWeight: 600
+                }}>
+                  {totalCalories > calorieGoal ? `+${totalCalories - calorieGoal} over` : `${calorieGoal - totalCalories} remaining`}
+                </div>
+              </div>
 
-            <button
-              type="submit"
-              disabled={!name.trim()}
-              className="buttons"
-              style={{
-                width: "100%",
-                padding: "10px",
-                backgroundColor: !name.trim() ? "#ccc" : "#2d5016",
-                cursor: !name.trim() ? "not-allowed" : "pointer",
-                opacity: !name.trim() ? 0.6 : 1,
-                fontSize: "14px",
-              }}
-            >
-              Add Food
-            </button>
-          </form>
+              <MacroProgressBar
+                label="Protein"
+                current={totalProtein}
+                goal={proteinGoal}
+                color="#ef4444"
+              />
+              <MacroProgressBar
+                label="Carbs"
+                current={totalCarbs}
+                goal={carbsGoal}
+                color="#3b82f6"
+              />
+              <MacroProgressBar
+                label="Fat"
+                current={totalFat}
+                goal={fatGoal}
+                color="#f59e0b"
+              />
+            </div>
+
+            <div style={{
+              backgroundColor: "white",
+              border: "2px solid #e0d8b8",
+              borderRadius: "12px",
+              padding: "1.5rem",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.05)"
+            }}>
+              <h3 style={{
+                margin: 0,
+                marginBottom: "1rem",
+                fontSize: "1.3rem",
+                fontWeight: 700,
+                color: "#2d5016"
+              }}>
+                ➕ Add Food
+              </h3>
+
+              {error && (
+                <div style={{
+                  padding: "0.75rem",
+                  backgroundColor: "#fee2e2",
+                  border: "2px solid #fecaca",
+                  borderRadius: "8px",
+                  color: "#991b1b",
+                  fontSize: "0.9rem",
+                  marginBottom: "1rem"
+                }}>
+                  ⚠️ {error}
+                </div>
+              )}
+
+              <form onSubmit={handleAdd}>
+                <div style={{ marginBottom: "1rem" }}>
+                  <label htmlFor="food-name" style={{
+                    display: "block",
+                    marginBottom: "0.5rem",
+                    fontSize: "0.9rem",
+                    fontWeight: 600,
+                    color: "#2d5016"
+                  }}>
+                    Food Name *
+                  </label>
+                  <input
+                    id="food-name"
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder="e.g., Grilled Chicken"
+                    required
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      border: "2px solid #e0d8b8",
+                      borderRadius: "8px",
+                      fontSize: "1rem"
+                    }}
+                  />
+                </div>
+
+                <div style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: "0.75rem",
+                  marginBottom: "1rem"
+                }}>
+                  <div>
+                    <label htmlFor="calories" style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
+                      color: "#2d5016"
+                    }}>
+                      Calories
+                    </label>
+                    <input
+                      id="calories"
+                      type="number"
+                      min={0}
+                      value={calories}
+                      onChange={(e) => setCalories(e.target.value)}
+                      placeholder="300"
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        border: "2px solid #e0d8b8",
+                        borderRadius: "8px",
+                        fontSize: "1rem"
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="protein" style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
+                      color: "#2d5016"
+                    }}>
+                      Protein (g)
+                    </label>
+                    <input
+                      id="protein"
+                      type="number"
+                      min={0}
+                      value={protein}
+                      onChange={(e) => setProtein(e.target.value)}
+                      placeholder="30"
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        border: "2px solid #e0d8b8",
+                        borderRadius: "8px",
+                        fontSize: "1rem"
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="carbs" style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
+                      color: "#2d5016"
+                    }}>
+                      Carbs (g)
+                    </label>
+                    <input
+                      id="carbs"
+                      type="number"
+                      min={0}
+                      value={carbs}
+                      onChange={(e) => setCarbs(e.target.value)}
+                      placeholder="0"
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        border: "2px solid #e0d8b8",
+                        borderRadius: "8px",
+                        fontSize: "1rem"
+                      }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="fat" style={{
+                      display: "block",
+                      marginBottom: "0.5rem",
+                      fontSize: "0.9rem",
+                      fontWeight: 600,
+                      color: "#2d5016"
+                    }}>
+                      Fat (g)
+                    </label>
+                    <input
+                      id="fat"
+                      type="number"
+                      min={0}
+                      value={fat}
+                      onChange={(e) => setFat(e.target.value)}
+                      placeholder="5"
+                      style={{
+                        width: "100%",
+                        padding: "10px",
+                        border: "2px solid #e0d8b8",
+                        borderRadius: "8px",
+                        fontSize: "1rem"
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ marginBottom: "1rem" }}>
+                  <label htmlFor="meal-type" style={{
+                    display: "block",
+                    marginBottom: "0.5rem",
+                    fontSize: "0.9rem",
+                    fontWeight: 600,
+                    color: "#2d5016"
+                  }}>
+                    Meal Type
+                  </label>
+                  <select
+                    id="meal-type"
+                    value={mealType}
+                    onChange={(e) => setMealType(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      border: "2px solid #e0d8b8",
+                      borderRadius: "8px",
+                      fontSize: "1rem",
+                      backgroundColor: "white",
+                      cursor: "pointer"
+                    }}
+                  >
+                    <option value="Breakfast">🌅 Breakfast</option>
+                    <option value="Lunch">🌞 Lunch</option>
+                    <option value="Dinner">🌙 Dinner</option>
+                    <option value="Snack">🍎 Snack</option>
+                  </select>
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={!name.trim() || loading}
+                  style={{
+                    width: "100%",
+                    padding: "14px",
+                    borderRadius: "8px",
+                    border: "none",
+                    backgroundColor: !name.trim() || loading ? "#ccc" : "#2d5016",
+                    color: "white",
+                    fontSize: "1rem",
+                    fontWeight: 700,
+                    cursor: !name.trim() || loading ? "not-allowed" : "pointer",
+                    opacity: !name.trim() || loading ? 0.6 : 1
+                  }}
+                >
+                  {loading ? "Adding..." : "Add Food Entry"}
+                </button>
+              </form>
+            </div>
+          </aside>
         </div>
 
-        {/* Status Messages */}
-        {error && (
-          <div className="error" style={{ marginBottom: "1rem", display: "block" }}>
-            {error}
-          </div>
-        )}
-        {loading && (
-          <div style={{ marginBottom: "0.75rem", fontSize: "0.9rem", color: "var(--muted)" }}>
-            Loading…
-          </div>
-        )}
-
-        {/* Horizontal Divider */}
-        <div style={{
-          height: "1px",
-          backgroundColor: "#6f4e37",
-          margin: "1.5rem 0"
-        }}></div>
-
-        {/* Foods Table */}
-        <section>
-          <h2 style={{ fontSize: "1.1rem", fontWeight: 600, marginBottom: "0.8rem", color: "var(--text)" }}>
-            Food Entries ({filteredEntries.length})
-          </h2>
-
-          {filteredEntries.length === 0 ? (
-            <p style={{ fontSize: "0.9rem", color: "var(--muted)" }}>
-              No foods to show yet. Add your first entry above.
-            </p>
-          ) : (
-            <div style={{
-              border: "1px solid var(--border)",
-              borderRadius: "10px",
-              overflow: "hidden"
-            }}>
-              <div style={{ overflowX: "auto" }}>
-                <table className="table" style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead>
-                    <tr>
-                      <th style={{ textAlign: "left", padding: "12px" }}>Food</th>
-                      <th style={{ textAlign: "center", padding: "12px" }}>Meal</th>
-                      <th style={{ textAlign: "center", padding: "12px" }}>Calories</th>
-                      <th style={{ textAlign: "center", padding: "12px" }}>Protein (g)</th>
-                      <th style={{ textAlign: "center", padding: "12px" }}>Carbs (g)</th>
-                      <th style={{ textAlign: "center", padding: "12px" }}>Fat (g)</th>
-                      <th style={{ textAlign: "center", padding: "12px" }}>Date Added</th>
-                      <th style={{ textAlign: "center", padding: "12px", width: "100px" }}>Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredEntries.map((entry) => (
-                      <tr key={entry.entryId}>
-                        <td style={{ padding: "12px", fontWeight: 500 }}>{entry.foodName}</td>
-                        <td style={{ padding: "12px", textAlign: "center", fontSize: "0.85rem" }}>{entry.mealType}</td>
-                        <td style={{ padding: "12px", textAlign: "center" }}>{entry.calories}</td>
-                        <td style={{ padding: "12px", textAlign: "center", color: "var(--muted)" }}>{entry.protein}</td>
-                        <td style={{ padding: "12px", textAlign: "center", color: "var(--muted)" }}>{entry.carbs}</td>
-                        <td style={{ padding: "12px", textAlign: "center", color: "var(--muted)" }}>{entry.fat}</td>
-                        <td style={{ padding: "12px", textAlign: "center", color: "var(--muted)", fontSize: "0.9rem" }}>
-                          {formatDate(entry.timestamp)}
-                        </td>
-                        <td style={{ padding: "12px", textAlign: "center" }}>
-                          <button
-                            type="button"
-                            onClick={() => confirmDelete(entry.entryId)}
-                            className="btn btn--danger"
-                            style={{ fontSize: "0.85rem", padding: "6px 12px" }}
-                          >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-        </section>
-
-        {/* Custom Delete Confirmation Modal */}
+        {/* Delete Modal */}
         {showDeleteModal && (
           <div style={{
             position: "fixed",
@@ -799,34 +1133,35 @@ const FoodLanding: React.FC = () => {
             left: 0,
             right: 0,
             bottom: 0,
-            backgroundColor: "rgba(0, 0, 0, 0.5)",
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            zIndex: 1000,
+            zIndex: 1000
           }}>
             <div style={{
-              backgroundColor: "#f5f5dc",
+              backgroundColor: "white",
               borderRadius: "12px",
               padding: "2rem",
-              maxWidth: "400px",
+              maxWidth: "450px",
               width: "90%",
-              boxShadow: "0 8px 24px rgba(0, 0, 0, 0.3)",
-              border: "1px solid #e0d8b8",
+              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.3)",
+              border: "2px solid #e0d8b8"
             }}>
               <h3 style={{
                 marginTop: 0,
                 marginBottom: "1rem",
-                color: "#2d5016",
-                fontSize: "1.2rem",
-                fontWeight: 600
+                color: "#e11d48",
+                fontSize: "1.3rem",
+                fontWeight: 700
               }}>
-                Delete Food Entry?
+                ⚠️ Delete Food Entry?
               </h3>
               <p style={{
                 marginBottom: "1.5rem",
                 color: "#6f4e37",
-                fontSize: "0.95rem"
+                fontSize: "1rem",
+                lineHeight: 1.5
               }}>
                 Are you sure you want to delete this food entry? This action cannot be undone.
               </p>
@@ -839,14 +1174,14 @@ const FoodLanding: React.FC = () => {
                   type="button"
                   onClick={cancelDelete}
                   style={{
-                    padding: "8px 16px",
+                    padding: "10px 20px",
                     borderRadius: "8px",
                     border: "2px solid #e0d8b8",
                     backgroundColor: "white",
                     color: "#2d5016",
-                    fontSize: "14px",
+                    fontSize: "1rem",
                     fontWeight: 600,
-                    cursor: "pointer",
+                    cursor: "pointer"
                   }}
                 >
                   Cancel
@@ -854,18 +1189,203 @@ const FoodLanding: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleDelete}
+                  disabled={loading}
                   style={{
-                    padding: "8px 16px",
+                    padding: "10px 20px",
                     borderRadius: "8px",
                     border: "none",
-                    backgroundColor: "#e11d48",
+                    backgroundColor: loading ? "#ccc" : "#e11d48",
                     color: "white",
-                    fontSize: "14px",
+                    fontSize: "1rem",
                     fontWeight: 600,
-                    cursor: "pointer",
+                    cursor: loading ? "not-allowed" : "pointer"
                   }}
                 >
-                  Delete
+                  {loading ? "Deleting..." : "Delete"}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Goals Modal */}
+        {isEditingGoals && (
+          <div style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.6)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000
+          }}>
+            <div style={{
+              backgroundColor: "white",
+              borderRadius: "12px",
+              padding: "2rem",
+              maxWidth: "500px",
+              width: "90%",
+              boxShadow: "0 20px 50px rgba(0, 0, 0, 0.3)",
+              border: "2px solid #e0d8b8"
+            }}>
+              <h3 style={{
+                marginTop: 0,
+                marginBottom: "1.5rem",
+                color: "#2d5016",
+                fontSize: "1.5rem",
+                fontWeight: 700
+              }}>
+                ⚙️ Edit Your Daily Goals
+              </h3>
+
+              <div style={{ marginBottom: "1rem" }}>
+                <label htmlFor="edit-calorie-goal" style={{
+                  display: "block",
+                  marginBottom: "0.5rem",
+                  fontSize: "0.95rem",
+                  fontWeight: 600,
+                  color: "#2d5016"
+                }}>
+                  Calorie Goal
+                </label>
+                <input
+                  id="edit-calorie-goal"
+                  type="number"
+                  min={0}
+                  value={tempCalorieGoal}
+                  onChange={(e) => setTempCalorieGoal(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    border: "2px solid #e0d8b8",
+                    borderRadius: "8px",
+                    fontSize: "1rem"
+                  }}
+                />
+              </div>
+
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "1fr 1fr 1fr",
+                gap: "1rem",
+                marginBottom: "1.5rem"
+              }}>
+                <div>
+                  <label htmlFor="edit-protein-goal" style={{
+                    display: "block",
+                    marginBottom: "0.5rem",
+                    fontSize: "0.9rem",
+                    fontWeight: 600,
+                    color: "#2d5016"
+                  }}>
+                    Protein (g)
+                  </label>
+                  <input
+                    id="edit-protein-goal"
+                    type="number"
+                    min={0}
+                    value={tempProteinGoal}
+                    onChange={(e) => setTempProteinGoal(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      border: "2px solid #e0d8b8",
+                      borderRadius: "8px",
+                      fontSize: "1rem"
+                    }}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit-carbs-goal" style={{
+                    display: "block",
+                    marginBottom: "0.5rem",
+                    fontSize: "0.9rem",
+                    fontWeight: 600,
+                    color: "#2d5016"
+                  }}>
+                    Carbs (g)
+                  </label>
+                  <input
+                    id="edit-carbs-goal"
+                    type="number"
+                    min={0}
+                    value={tempCarbsGoal}
+                    onChange={(e) => setTempCarbsGoal(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      border: "2px solid #e0d8b8",
+                      borderRadius: "8px",
+                      fontSize: "1rem"
+                    }}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="edit-fat-goal" style={{
+                    display: "block",
+                    marginBottom: "0.5rem",
+                    fontSize: "0.9rem",
+                    fontWeight: 600,
+                    color: "#2d5016"
+                  }}>
+                    Fat (g)
+                  </label>
+                  <input
+                    id="edit-fat-goal"
+                    type="number"
+                    min={0}
+                    value={tempFatGoal}
+                    onChange={(e) => setTempFatGoal(e.target.value)}
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      border: "2px solid #e0d8b8",
+                      borderRadius: "8px",
+                      fontSize: "1rem"
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div style={{
+                display: "flex",
+                gap: "1rem",
+                justifyContent: "flex-end"
+              }}>
+                <button
+                  type="button"
+                  onClick={cancelEditGoals}
+                  style={{
+                    padding: "12px 24px",
+                    borderRadius: "8px",
+                    border: "2px solid #e0d8b8",
+                    backgroundColor: "white",
+                    color: "#2d5016",
+                    fontSize: "1rem",
+                    fontWeight: 600,
+                    cursor: "pointer"
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={saveGoals}
+                  style={{
+                    padding: "12px 24px",
+                    borderRadius: "8px",
+                    border: "none",
+                    backgroundColor: "#2d5016",
+                    color: "white",
+                    fontSize: "1rem",
+                    fontWeight: 600,
+                    cursor: "pointer"
+                  }}
+                >
+                  Save Goals
                 </button>
               </div>
             </div>
