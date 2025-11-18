@@ -7,7 +7,8 @@ exports.getFoods = async (req, res) => {
   const { search } = req.query;
 
   try {
-    const query = { UserID: parseInt(userId) };
+    const query = { UserID: {
+      $in: [parseInt(userId), 1]}};
     if (search) {
       query.Name = { $regex: search, $options: 'i' };
     }
