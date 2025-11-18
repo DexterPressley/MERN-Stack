@@ -438,7 +438,7 @@ const FoodLanding: React.FC = () => {
   }
 
   return (
-    <div className="content-box" style={{ maxWidth: "1000px" }}>
+    <div className="content-box" style={{ minWidth: "750px", maxWidth: "1000px" }}>
       <div id="foodLandingDiv">
         {/* Header with welcome and logout */}
         <div className="header-row" style={{ marginBottom: "1.5rem" }}>
@@ -552,7 +552,7 @@ const FoodLanding: React.FC = () => {
 
           {/* Vertical Divider */}
           <div style={{
-            width: "1px",
+            width: "0px",
             backgroundColor: "#6f4e37",
             alignSelf: "stretch",
             marginTop: "2.5rem",
