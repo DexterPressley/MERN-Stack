@@ -158,11 +158,14 @@ function Login() {
     setResendMessage('');
 
     try {
+      console.log('Attempting to resend verification email to:', emailToUse);
       const { data: res } = await axios.post(
-        buildPath('api/resendVerificationEmail'),
+        buildPath('api/resend-verification'),
         { email: emailToUse },
         { headers: { 'Content-Type': 'application/json' } }
       );
+
+      console.log('Resend response:', res);
 
       if (res?.success) {
         setResendMessage('Verification email sent! Please check your inbox.');
@@ -172,10 +175,15 @@ function Login() {
       }
     } catch (err: any) {
       console.error('Resend verification error:', err);
+      console.error('Error response:', err.response);
+      console.error('Error data:', err.response?.data);
+      
       if (err.response && err.response.data && err.response.data.message) {
         setResendMessage(err.response.data.message);
+      } else if (err.response && err.response.status) {
+        setResendMessage(`Error ${err.response.status}: Failed to resend verification email.`);
       } else {
-        setResendMessage('Error resending verification email.');
+        setResendMessage('Error resending verification email. Please try again.');
       }
     } finally {
       setIsResending(false);
