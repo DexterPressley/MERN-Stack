@@ -122,9 +122,12 @@ exports.login = async (req, res) => {
       return res.status(401).json({ error: 'Username/Password incorrect' });
     }
 
-    // TEMPORARILY DISABLED FOR DEVELOPMENT
+    // Check email verification and include email in response for resend functionality
     if (!u.IsVerified) {
-      return res.status(401).json({ error: 'Your Email not yet verified. Please check your inbox.' });
+      return res.status(401).json({ 
+        error: 'Your Email not yet verified. Please check your inbox.',
+        email: u.Email // Include email so frontend can offer resend option
+      });
     }
 
     const id = u.UserID;
