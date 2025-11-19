@@ -39,7 +39,7 @@ exports.getDays = async (req, res) => {
         for (let entry of day.Entries) {
           const food = await Food.findOne({ 
             FoodID: entry.FoodID, 
-            UserID: parseInt(userId) 
+            UserID: { $in: [parseInt(userId), 1] } 
           }).lean();
           
           if (food) {
@@ -100,7 +100,7 @@ exports.getDayById = async (req, res) => {
       for (let entry of day.Entries) {
         const food = await Food.findOne({ 
           FoodID: entry.FoodID, 
-          UserID: parseInt(userId) 
+          UserID: { $in: [parseInt(userId), 1] } 
         }).lean();
         
         if (food) {
