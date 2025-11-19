@@ -21,11 +21,6 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Add universal box-sizing fix */
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
 a {
   font-weight: 500;
   color: #3d6b1f;
@@ -84,7 +79,6 @@ button {
   cursor: pointer;
   /* transition: border-color 0.25s; */
   transition: all 0.25s;
-  box-sizing: border-box;
 }
 button:hover {
   border-color: #3d6b1f;
@@ -116,7 +110,6 @@ input, textarea {
   border-radius: 4px;
   padding: 0.5em;
   font-family: inherit;
-  box-sizing: border-box;
 }
 
 input:focus, textarea:focus {
@@ -157,7 +150,6 @@ input:focus, textarea:focus {
   display: block;
   width: 100%;
   margin-bottom: 8px;
-  box-sizing: border-box;
 }
 
 /* Label styling */
@@ -179,7 +171,6 @@ input:focus, textarea:focus {
   font-family: var(--font);
   transition: border-color 0.2s ease;
   background: white;
-  box-sizing: border-box;
 }
 
 #registerDiv input[type="text"]:focus,
@@ -223,7 +214,6 @@ input:focus, textarea:focus {
   cursor: pointer;
   transition: background-color 0.2s ease;
   font-family: var(--font);
-  box-sizing: border-box;
 }
 
 #registerButton:hover {
@@ -278,7 +268,6 @@ input:focus, textarea:focus {
   transition: background-color 0.2s ease;
   font-family: var(--font);
   white-space: nowrap;
-  box-sizing: border-box;
 }
 
 #registerDiv .btn-back:hover {
@@ -321,7 +310,6 @@ input:focus, textarea:focus {
   display: block;
   width: 100%;
   margin-bottom: 8px;
-  box-sizing: border-box;
 }
 
 /* Label styling */
@@ -342,7 +330,6 @@ input:focus, textarea:focus {
   font-family: var(--font);
   transition: border-color 0.2s ease;
   background: white;
-  box-sizing: border-box;
 }
 
 #loginDiv input[type="text"]:focus,
@@ -385,7 +372,6 @@ input:focus, textarea:focus {
   cursor: pointer;
   transition: background-color 0.2s ease;
   font-family: var(--font);
-  box-sizing: border-box;
 }
 
 #loginButton:hover {
@@ -432,7 +418,6 @@ input:focus, textarea:focus {
   cursor: pointer;
   transition: background-color 0.2s ease;
   font-family: var(--font);
-  box-sizing: border-box;
 }
 
 #signUpButton:hover {
@@ -477,7 +462,6 @@ input:focus, textarea:focus {
   cursor: pointer;
   transition: background-color 0.2s ease;
   font-family: var(--font);
-  box-sizing: border-box;
 }
 
 #foodLandingDiv .btn-back:hover {
@@ -501,7 +485,6 @@ input:focus, textarea:focus {
   font-size: 16px;
   font-family: var(--font);
   background: white;
-  box-sizing: border-box;
 }
 
 #foodLandingDiv input[type="text"]:focus,
@@ -522,7 +505,6 @@ input:focus, textarea:focus {
   cursor: pointer;
   transition: background-color 0.2s ease;
   font-family: var(--font);
-  box-sizing: border-box;
 }
 
 #foodLandingDiv .buttons:hover:not(:disabled) {
@@ -567,7 +549,6 @@ input:focus, textarea:focus {
   font-size: 0.85rem;
   cursor: pointer;
   font-family: var(--font);
-  box-sizing: border-box;
 }
 
 #foodLandingDiv .btn--danger:hover {
