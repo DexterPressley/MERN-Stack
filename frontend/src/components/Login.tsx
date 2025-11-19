@@ -121,8 +121,9 @@ function Login() {
   }
 
   return (
-    <div id="loginDiv">
-      <span id="inner-title">Please Log In</span>
+    <main style={{ display: 'contents' }}>
+      <div id="loginDiv">
+        <span id="inner-title">Please Log In</span>
 
         <label htmlFor="loginName">Username</label>
         <input
@@ -167,8 +168,8 @@ function Login() {
           </button>
         </div>
     </div>
+    </main>
   );
 }
 
 export default Login;
-

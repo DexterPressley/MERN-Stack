@@ -169,8 +169,9 @@ function Register() {
     }
 
     return (
-        <div id="registerDiv">
-            <div className="header-row">
+        <main style={{ display: 'contents' }}>
+            <div id="registerDiv">
+                <div className="header-row">
                 <span id="inner-title">Register New Account</span>
                 <button
                     type="button"
@@ -256,6 +257,7 @@ function Register() {
             />
             <span id="registerResult">{message}</span>
         </div>
+        </main>
     );
 }
 
