@@ -1532,7 +1532,8 @@ const FoodLanding: React.FC = () => {
                     padding: "12px",
                     border: "2px solid #e0d8b8",
                     borderRadius: "8px",
-                    fontSize: "1rem"
+                    fontSize: "1rem",
+                    boxSizing: "border-box"
                   }}
                 />
               </div>
@@ -1564,7 +1565,8 @@ const FoodLanding: React.FC = () => {
                       padding: "12px",
                       border: "2px solid #e0d8b8",
                       borderRadius: "8px",
-                      fontSize: "1rem"
+                      fontSize: "1rem",
+                      boxSizing: "border-box"
                     }}
                   />
                 </div>
@@ -1589,7 +1591,8 @@ const FoodLanding: React.FC = () => {
                       padding: "12px",
                       border: "2px solid #e0d8b8",
                       borderRadius: "8px",
-                      fontSize: "1rem"
+                      fontSize: "1rem",
+                      boxSizing: "border-box"
                     }}
                   />
                 </div>
@@ -1614,7 +1617,8 @@ const FoodLanding: React.FC = () => {
                       padding: "12px",
                       border: "2px solid #e0d8b8",
                       borderRadius: "8px",
-                      fontSize: "1rem"
+                      fontSize: "1rem",
+                      boxSizing: "border-box"
                     }}
                   />
                 </div>
