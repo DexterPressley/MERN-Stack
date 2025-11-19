@@ -9,11 +9,11 @@ info:
     Data Model: User has many Days, Day has many Entries, Entry references one Food and has a MealType.
     
     
-    Authentication: Most endpoints require a JWT token in the Authorization header (Bearer token format).
+    Authentication: Most endpoints require a JSON Web Token (JWT) in the Authorization header (Bearer token format).
     
     
     Token Refresh: All protected endpoints return a refreshed token in the X-Refreshed-Token response header.
-  version: 2.0.0
+  version: 1.0.0
   contact:
     name: API Support
     email: de225789@ucf.edu
@@ -457,7 +457,7 @@ paths:
             X-Refreshed-Token:
               schema:
                 type: string
-              description: Refreshed JWT token
+              description: Refreshed JWT
           content:
             application/json:
               schema:
@@ -1459,7 +1459,7 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: JWT token obtained from /login endpoint
+      description: JWT obtained from /login endpoint
 
   schemas:
     Food:
