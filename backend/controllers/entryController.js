@@ -43,7 +43,7 @@ exports.addEntry = async (req, res) => {
     // Verify food exists and belongs to user
     const food = await Food.findOne({ 
       FoodID: parseInt(foodId), 
-      UserID: parseInt(userId) 
+      UserID: { $in: [parseInt(userId), 1] }
     });
     
     if (!food) {
