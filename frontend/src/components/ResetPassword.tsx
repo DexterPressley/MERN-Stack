@@ -119,7 +119,7 @@ function ResetPassword() {
 
     return (
         <main style={{ display: 'contents' }}>
-            <div id="resetPasswordDiv" style={{ width: '100%', maxWidth: '500px', margin: '0 auto' }}>
+            <div id="resetPasswordDiv" style={{ width: '100%', minWidth: '300px', maxWidth: '300px', margin: '0 auto' }}>
                 <div className="header-row" style={{ 
                     display: 'flex', 
                     justifyContent: 'space-between', 
