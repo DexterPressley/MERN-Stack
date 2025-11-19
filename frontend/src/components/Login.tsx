@@ -138,7 +138,7 @@ function Login() {
           // Show resend button after 30 seconds
           setTimeout(() => {
             setShowResendButton(true);
-          }, 30000);
+          }, 15000);
         }
       } else {
         setMessage('Network or server error logging in.');
