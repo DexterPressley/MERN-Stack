@@ -21,6 +21,12 @@ function Login() {
   const [loginNameError, setLoginNameError] = useState('');
   const [loginPasswordError, setLoginPasswordError] = useState('');
 
+  // Resend verification states
+  const [showResendButton, setShowResendButton] = useState(false);
+  const [resendEmail, setResendEmail] = useState('');
+  const [resendMessage, setResendMessage] = useState('');
+  const [isResending, setIsResending] = useState(false);
+
 
   function handleSetLoginName(e: React.ChangeEvent<HTMLInputElement>) {
     setLoginName(e.target.value);
@@ -37,6 +43,9 @@ function Login() {
     setLoginNameError('');
     setLoginPasswordError('');
     setMessage('');
+    setShowResendButton(false);
+    setResendEmail('');
+    setResendMessage('');
   }
 
   async function doLogin(
@@ -108,7 +117,22 @@ function Login() {
     } catch (err: any) {
       console.error(err);
       if (err.response && err.response.data && err.response.data.error) {
-        setMessage(err.response.data.error);
+        const errorMessage = err.response.data.error;
+        setMessage(errorMessage);
+        
+        // Check if error is about email verification
+        if (errorMessage.toLowerCase().includes('email not yet verified') || 
+            errorMessage.toLowerCase().includes('not verified')) {
+          // Store the email if provided in error response, otherwise we'll ask user
+          if (err.response.data.email) {
+            setResendEmail(err.response.data.email);
+          }
+          
+          // Show resend button after 30 seconds
+          setTimeout(() => {
+            setShowResendButton(true);
+          }, 30000);
+        }
       } else {
         setMessage('Network or server error logging in.');
       }
@@ -118,6 +142,44 @@ function Login() {
 
   function goToRegister() {
     window.location.href = '/register';
+  }
+
+  async function handleResendVerification(): Promise<void> {
+    let emailToUse = resendEmail;
+    
+    // If we don't have the email, prompt the user
+    if (!emailToUse) {
+      emailToUse = prompt('Please enter your email address:') || '';
+      if (!emailToUse) return;
+      setResendEmail(emailToUse);
+    }
+
+    setIsResending(true);
+    setResendMessage('');
+
+    try {
+      const { data: res } = await axios.post(
+        buildPath('api/resendVerificationEmail'),
+        { email: emailToUse },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      if (res?.success) {
+        setResendMessage('Verification email sent! Please check your inbox.');
+        setShowResendButton(false);
+      } else {
+        setResendMessage(res?.message || 'Failed to resend verification email.');
+      }
+    } catch (err: any) {
+      console.error('Resend verification error:', err);
+      if (err.response && err.response.data && err.response.data.message) {
+        setResendMessage(err.response.data.message);
+      } else {
+        setResendMessage('Error resending verification email.');
+      }
+    } finally {
+      setIsResending(false);
+    }
   }
 
   return (
@@ -155,6 +217,34 @@ function Login() {
           onClick={doLogin}
         />
         <span id="loginResult">{message}</span>
+
+        {resendMessage && (
+          <div style={{ 
+            textAlign: 'center', 
+            marginTop: '12px', 
+            color: resendMessage.includes('sent') ? '#2ecc71' : '#e74c3c',
+            fontSize: '0.95rem'
+          }}>
+            {resendMessage}
+          </div>
+        )}
+
+        {showResendButton && (
+          <button
+            type="button"
+            id="resendVerificationButton"
+            className="buttons"
+            onClick={handleResendVerification}
+            disabled={isResending}
+            style={{ 
+              width: '100%', 
+              marginTop: '12px',
+              backgroundColor: isResending ? '#ccc' : '#2d5016'
+            }}
+          >
+            {isResending ? 'Sending...' : 'Resend Verification Email'}
+          </button>
+        )}
 
         <div id="newUserSection">
           <span id="newUserText">New User?</span>
