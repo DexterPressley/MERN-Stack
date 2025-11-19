@@ -42,7 +42,7 @@ paths:
       tags:
         - Authentication
       summary: Register a new user
-      description: Creates a new user account with hashed password and default macro goals
+      description: Creates a new user account with hashed password, default macro goals, and sends a verification email. User must verify email before logging in.
       operationId: registerUser
       requestBody:
         required: true
@@ -112,7 +112,7 @@ paths:
       tags:
         - Authentication
       summary: User login
-      description: Authenticate user and receive JWT token
+      description: Authenticate user and receive JSON Web Token. User must have verified their email before logging in.
       operationId: loginUser
       requestBody:
         required: true
@@ -127,6 +127,7 @@ paths:
                 username:
                   type: string
                   example: johndoe
+                  description: Username (case-insensitive)
                 password:
                   type: string
                   format: password
@@ -139,6 +140,9 @@ paths:
               schema:
                 type: object
                 properties:
+                  success:
+                    type: boolean
+                    example: true
                   accessToken:
                     type: string
                     example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -151,12 +155,270 @@ paths:
                   lastName:
                     type: string
                     example: Doe
+                  username:
+                    type: string
+                    example: johndoe
         '401':
-          description: Invalid credentials
+          description: Invalid credentials or email not verified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Username/Password incorrect
+                  email:
+                    type: string
+                    example: john@example.com
+                    description: Only included when email is not verified, to enable resend functionality
+
+  /verify-email:
+    post:
+      tags:
+        - Authentication
+      summary: Verify email address
+      description: Verify user's email using the token sent to their email after registration
+      operationId: verifyEmail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                  example: a1b2c3d4e5f6...
+                  description: Verification token from email link
+      responses:
+        '200':
+          description: Email verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Email verified successfully! You can now log in.
+        '400':
+          description: Invalid or expired token
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  /resend-verification:
+    post:
+      tags:
+        - Authentication
+      summary: Resend verification email
+      description: Request a new verification email if the original was not received or expired
+      operationId: resendVerification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+      responses:
+        '200':
+          description: Verification email sent (if email exists in system)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Verification email has been resent. Please check your inbox.
+        '400':
+          description: Email already verified or invalid
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /forgot-username:
+    post:
+      tags:
+        - Authentication
+      summary: Recover forgotten username
+      description: Request username recovery email
+      operationId: forgotUsername
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+      responses:
+        '200':
+          description: Recovery email will be sent if email exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: If that email exists, we will send you a username recovery email.
+
+  /forgot-password:
+    post:
+      tags:
+        - Authentication
+      summary: Request password reset
+      description: Send password reset link to user's email
+      operationId: forgotPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+      responses:
+        '200':
+          description: Reset email will be sent if email exists
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: If that email exists, we will send you a password reset email.
+
+  /reset-password:
+    post:
+      tags:
+        - Authentication
+      summary: Reset password
+      description: Reset user password using token from email
+      operationId: resetPassword
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - newPassword
+                - confirmPassword
+              properties:
+                token:
+                  type: string
+                  example: a1b2c3d4e5f6...
+                  description: Password reset token from email
+                newPassword:
+                  type: string
+                  format: password
+                  minLength: 6
+                  example: newpassword123
+                confirmPassword:
+                  type: string
+                  format: password
+                  example: newpassword123
+      responses:
+        '200':
+          description: Password reset successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Password has been reset successfully. You can now log in with your new password.
+        '400':
+          description: Invalid token or validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/{userId}:
+    get:
+      tags:
+        - User Settings
+      summary: Get user profile
+      description: Retrieve user profile information including goals and settings
+      operationId: getUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+          example: 1
+      responses:
+        '200':
+          description: User profile retrieved successfully
+          headers:
+            X-Refreshed-Token:
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  user:
+                    $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /users/{userId}/calorie-goal:
     patch:
       tags:
@@ -359,6 +621,7 @@ paths:
                 $ref: '#/components/schemas/Error'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
+
   /users/{userId}/foods:
     get:
       tags:
@@ -633,6 +896,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
   /users/{userId}/days:
     get:
       tags:
@@ -667,7 +931,7 @@ paths:
           example: "2025-10-31"
       responses:
         '200':
-          description: Days retrieved successfully
+          description: Days retrieved successfully with enriched entry data
           headers:
             X-Refreshed-Token:
               schema:
@@ -683,7 +947,7 @@ paths:
                   results:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Day'
+                      $ref: '#/components/schemas/EnrichedDay'
                   count:
                     type: integer
                     example: 5
@@ -799,7 +1063,7 @@ paths:
           example: 15
       responses:
         '200':
-          description: Day retrieved successfully
+          description: Day retrieved successfully with enriched entry data
           headers:
             X-Refreshed-Token:
               schema:
@@ -813,7 +1077,7 @@ paths:
                     type: boolean
                     example: true
                   day:
-                    $ref: '#/components/schemas/Day'
+                    $ref: '#/components/schemas/EnrichedDay'
         '401':
           $ref: '#/components/responses/UnauthorizedError'
         '404':
@@ -946,6 +1210,7 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
   /users/{userId}/days/{dayId}/entries:
     post:
       tags:
@@ -1187,6 +1452,7 @@ paths:
                     type: string
                     format: date-time
                     example: "2025-10-30T12:34:56.789Z"
+
 components:
   securitySchemes:
     BearerAuth:
@@ -1257,25 +1523,59 @@ components:
 
     EnrichedEntry:
       type: object
-      description: Entry with calculated macros and food details for Flutter frontend
+      description: Entry with calculated macros and food details
       properties:
+        _id:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+          description: MongoDB ObjectId
         entryId:
           type: string
           example: "507f1f77bcf86cd799439011"
+        FoodID:
+          type: integer
+          example: 42
         foodId:
           type: integer
           example: 42
         foodName:
           type: string
           example: Grilled Chicken Breast
+        Amount:
+          type: number
+          format: float
+          example: 2.5
         amount:
           type: number
           format: float
           example: 2.5
+        MealType:
+          type: string
+          enum: [Breakfast, Lunch, Dinner, Snack]
+          example: Lunch
         mealType:
           type: string
           enum: [Breakfast, Lunch, Dinner, Snack]
           example: Lunch
+        caloriesPerUnit:
+          type: number
+          format: float
+          example: 165
+        proteinPerUnit:
+          type: number
+          format: float
+          example: 31
+        carbsPerUnit:
+          type: number
+          format: float
+          example: 0
+        fatPerUnit:
+          type: number
+          format: float
+          example: 3.6
+        unit:
+          type: string
+          example: 100g
         calories:
           type: integer
           example: 413
@@ -1292,6 +1592,10 @@ components:
           type: integer
           example: 9
           description: Total fat in grams (fatPerUnit * amount), rounded
+        Timestamp:
+          type: string
+          format: date-time
+          example: "2025-10-30T14:23:00.000Z"
         timestamp:
           type: string
           format: date-time
@@ -1312,6 +1616,65 @@ components:
           items:
             $ref: '#/components/schemas/Entry'
           description: Array of food entries for this day
+
+    UserProfile:
+      type: object
+      properties:
+        userId:
+          type: integer
+          example: 1
+        firstName:
+          type: string
+          example: John
+        lastName:
+          type: string
+          example: Doe
+        username:
+          type: string
+          example: johndoe
+        email:
+          type: string
+          format: email
+          example: john@example.com
+        calorieGoal:
+          type: integer
+          example: 2000
+        proteinGoal:
+          type: integer
+          example: 100
+        carbsGoal:
+          type: integer
+          example: 100
+        fatGoal:
+          type: integer
+          example: 100
+        dayRolloverTime:
+          type: string
+          example: "00:00"
+        isVerified:
+          type: boolean
+          example: true
+        createdAt:
+          type: string
+          format: date-time
+          example: "2025-10-15T10:30:00.000Z"
+
+    EnrichedDay:
+      type: object
+      description: Day with entries containing full food details and calculated macros
+      properties:
+        DayID:
+          type: integer
+          example: 15
+        Date:
+          type: string
+          format: date-time
+          example: "2025-10-30T00:00:00.000Z"
+        Entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/EnrichedEntry'
+          description: Array of food entries with enriched nutritional data
 
     Error:
       type: object
