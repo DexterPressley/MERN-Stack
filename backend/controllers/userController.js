@@ -123,9 +123,9 @@ exports.login = async (req, res) => {
     }
 
     // TEMPORARILY DISABLED FOR DEVELOPMENT
-    // if (!u.IsVerified) {
-    //   return res.status(401).json({ error: 'Your Email not yet verified. Please check your inbox.' });
-    // }
+    if (!u.IsVerified) {
+      return res.status(401).json({ error: 'Your Email not yet verified. Please check your inbox.' });
+    }
 
     const id = u.UserID;
     const fn = u.FirstName;
