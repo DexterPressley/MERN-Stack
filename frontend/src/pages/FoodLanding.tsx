@@ -216,55 +216,61 @@ const MealSection: React.FC<{
         <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
           {entries.map((entry) => (
             <div key={entry.entryId} style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
               padding: "1rem",
               backgroundColor: "white",
               borderRadius: "10px",
               border: "1px solid #e0d8b8",
-              boxShadow: "0 1px 3px rgba(0,0,0,0.05)"
+              boxShadow: "0 1px 3px rgba(0,0,0,0.05)",
+              position: "relative"
             }}>
-              <div style={{ flex: 1 }}>
+              <div style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "flex-start",
+                gap: "1rem",
+                marginBottom: "0.75rem"
+              }}>
                 <div style={{
                   fontWeight: 700,
                   color: "#2d5016",
-                  marginBottom: "0.5rem",
-                  fontSize: "1rem"
+                  fontSize: "1rem",
+                  flex: 1
                 }}>
                   {entry.foodName}
                 </div>
-                <div style={{
-                  fontSize: "0.85rem",
-                  color: "#6f4e37",
-                  marginBottom: "0.25rem"
-                }}>
-                  {entry.amount} {entry.unit} • {entry.calories} cal • P: {entry.protein}g • C: {entry.carbs}g • F: {entry.fat}g
-                </div>
-                <div style={{
-                  fontSize: "0.75rem",
-                  color: "#a0937d",
-                  fontStyle: "italic"
-                }}>
-                  Added {formatDate(entry.timestamp)}
-                </div>
+                <button
+                  type="button"
+                  onClick={() => onDelete(entry.entryId)}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: "6px",
+                    border: "none",
+                    backgroundColor: "#e11d48",
+                    color: "white",
+                    fontSize: "0.8rem",
+                    fontWeight: 600,
+                    cursor: "pointer",
+                    flexShrink: 0,
+                    whiteSpace: "nowrap"
+                  }}
+                >
+                  Remove
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={() => onDelete(entry.entryId)}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  border: "none",
-                  backgroundColor: "#e11d48",
-                  color: "white",
-                  fontSize: "0.85rem",
-                  fontWeight: 600,
-                  cursor: "pointer"
-                }}
-              >
-                Remove
-              </button>
+              <div style={{
+                fontSize: "0.85rem",
+                color: "#6f4e37",
+                marginBottom: "0.25rem"
+              }}>
+                {entry.amount} {entry.unit} • {entry.calories} cal • P: {entry.protein}g • C: {entry.carbs}g • F: {entry.fat}g
+              </div>
+              <div style={{
+                fontSize: "0.75rem",
+                color: "#a0937d",
+                fontStyle: "italic"
+              }}>
+                Added {formatDate(entry.timestamp)}
+              </div>
             </div>
           ))}
         </div>
@@ -360,9 +366,7 @@ const FoodLanding: React.FC = () => {
 
         if (res.ok) {
           const body = await res.json();
-          // API returns { success: true, results: [...], count: N }
           const foods = body.results || [];
-          // Ensure foods is an array and filter out any invalid entries
           const validFoods = Array.isArray(foods) ? foods.filter(f => f && f.Name && f.FoodID) : [];
           console.log('Loaded foods:', validFoods.length);
           setAllFoods(validFoods);
@@ -426,7 +430,6 @@ const FoodLanding: React.FC = () => {
     setName(value);
     setFoodSearchQuery(value);
     
-    // Clear nutrition fields if user is typing fresh
     if (!value.trim()) {
       setCalories("");
       setProtein("");
@@ -654,10 +657,8 @@ const FoodLanding: React.FC = () => {
       const existingFood = await findExistingFood(name);
 
       if (existingFood) {
-        // Use existing food
         foodId = existingFood.FoodID;
       } else {
-        // Create new food
         const foodRes = await fetch(`${API_BASE_URL}/users/${userId}/foods`, {
           method: "POST",
           headers: {
@@ -691,7 +692,6 @@ const FoodLanding: React.FC = () => {
           throw new Error("Failed to get food ID from response");
         }
 
-        // Add to local cache
         const newFood: Food = {
           FoodID: foodId,
           Name: name.trim(),
@@ -704,7 +704,6 @@ const FoodLanding: React.FC = () => {
         setAllFoods(prev => [...prev, newFood]);
       }
 
-      // Create entry with specified amount
       const entryRes = await fetch(`${API_BASE_URL}/users/${userId}/days/${currentDayId}/entries`, {
         method: "POST",
         headers: {
@@ -729,7 +728,6 @@ const FoodLanding: React.FC = () => {
 
       await fetchEntries();
 
-      // Reset form
       setName("");
       setFoodSearchQuery("");
       setCalories("");
@@ -942,7 +940,7 @@ const FoodLanding: React.FC = () => {
               onDelete={confirmDelete}
             />
             <MealSection
-              title="🎁 Snacks"
+              title="🍎 Snacks"
               entries={mealGroups.Snack}
               onDelete={confirmDelete}
             />
@@ -1013,12 +1011,12 @@ const FoodLanding: React.FC = () => {
                 </div>
                 <div style={{
                   marginTop: "0.75rem",
-                  padding: "4px 12px",
-                  backgroundColor: totalCalories > calorieGoal ? "#e11d48" : "#16a34a",
+                  padding: "6px 14px",
+                  backgroundColor: totalCalories > calorieGoal ? "#e11d48" : "#2d5016",
                   color: "white",
                   borderRadius: "12px",
                   display: "inline-block",
-                  fontSize: "0.85rem",
+                  fontSize: "0.9rem",
                   fontWeight: 600
                 }}>
                   {totalCalories > calorieGoal ? `+${totalCalories - calorieGoal} over` : `${calorieGoal - totalCalories} remaining`}
@@ -1110,7 +1108,6 @@ const FoodLanding: React.FC = () => {
                     }}
                   />
                   
-                  {/* Dropdown for food search results */}
                   {showDropdown && filteredFoods.length > 0 && (
                     <div style={{
                       position: "absolute",
@@ -1368,7 +1365,7 @@ const FoodLanding: React.FC = () => {
                     <option value="Breakfast">🌅 Breakfast</option>
                     <option value="Lunch">🌞 Lunch</option>
                     <option value="Dinner">🌙 Dinner</option>
-                    <option value="Snack">🎁 Snack</option>
+                    <option value="Snack">🍎 Snack</option>
                   </select>
                 </div>
 
@@ -1395,7 +1392,6 @@ const FoodLanding: React.FC = () => {
           </aside>
         </div>
 
-        {/* Delete Modal */}
         {showDeleteModal && (
           <div style={{
             position: "fixed",
@@ -1478,7 +1474,6 @@ const FoodLanding: React.FC = () => {
           </div>
         )}
 
-        {/* Edit Goals Modal */}
         {isEditingGoals && (
           <div style={{
             position: "fixed",
