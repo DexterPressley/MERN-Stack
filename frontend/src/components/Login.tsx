@@ -27,6 +27,13 @@ function Login() {
   const [resendMessage, setResendMessage] = useState('');
   const [isResending, setIsResending] = useState(false);
 
+  // Forgot username/password states
+  const [showForgotUsername, setShowForgotUsername] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotMessage, setForgotMessage] = useState('');
+  const [isSendingForgot, setIsSendingForgot] = useState(false);
+
 
   function handleSetLoginName(e: React.ChangeEvent<HTMLInputElement>) {
     setLoginName(e.target.value);
@@ -190,6 +197,74 @@ function Login() {
     }
   }
 
+  async function handleForgotUsername(): Promise<void> {
+    if (!forgotEmail || forgotEmail.trim() === '') {
+      setForgotMessage('Please enter your email address.');
+      return;
+    }
+
+    setIsSendingForgot(true);
+    setForgotMessage('');
+
+    try {
+      const { data: res } = await axios.post(
+        buildPath('api/forgot-username'),
+        { email: forgotEmail },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      if (res?.success) {
+        setForgotMessage(res.message || 'Username recovery email sent! Please check your inbox.');
+        setForgotEmail('');
+      } else {
+        setForgotMessage(res?.message || 'Failed to send username recovery email.');
+      }
+    } catch (err: any) {
+      console.error('Forgot username error:', err);
+      if (err.response && err.response.data && err.response.data.message) {
+        setForgotMessage(err.response.data.message);
+      } else {
+        setForgotMessage('Error sending username recovery email.');
+      }
+    } finally {
+      setIsSendingForgot(false);
+    }
+  }
+
+  async function handleForgotPassword(): Promise<void> {
+    if (!forgotEmail || forgotEmail.trim() === '') {
+      setForgotMessage('Please enter your email address.');
+      return;
+    }
+
+    setIsSendingForgot(true);
+    setForgotMessage('');
+
+    try {
+      const { data: res } = await axios.post(
+        buildPath('api/forgot-password'),
+        { email: forgotEmail },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+
+      if (res?.success) {
+        setForgotMessage(res.message || 'Password reset email sent! Please check your inbox.');
+        setForgotEmail('');
+      } else {
+        setForgotMessage(res?.message || 'Failed to send password reset email.');
+      }
+    } catch (err: any) {
+      console.error('Forgot password error:', err);
+      if (err.response && err.response.data && err.response.data.message) {
+        setForgotMessage(err.response.data.message);
+      } else {
+        setForgotMessage('Error sending password reset email.');
+      }
+    } finally {
+      setIsSendingForgot(false);
+    }
+  }
+
   return (
     <main style={{ display: 'contents' }}>
       <div id="loginDiv">
@@ -252,6 +327,221 @@ function Login() {
           >
             {isResending ? 'Sending...' : 'Resend Verification Email'}
           </button>
+        )}
+
+        {/* Forgot Username/Password Links */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          marginTop: '16px',
+          fontSize: '0.9rem'
+        }}>
+          <button
+            type="button"
+            onClick={() => {
+              setShowForgotUsername(true);
+              setShowForgotPassword(false);
+              setForgotMessage('');
+              setForgotEmail('');
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#2d5016',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              padding: '0',
+              fontSize: '0.9rem'
+            }}
+          >
+            Forgot Username?
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowForgotPassword(true);
+              setShowForgotUsername(false);
+              setForgotMessage('');
+              setForgotEmail('');
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: '#2d5016',
+              textDecoration: 'underline',
+              cursor: 'pointer',
+              padding: '0',
+              fontSize: '0.9rem'
+            }}
+          >
+            Forgot Password?
+          </button>
+        </div>
+
+        {/* Forgot Username Modal */}
+        {showForgotUsername && (
+          <div style={{
+            marginTop: '20px',
+            padding: '20px',
+            border: '2px solid #2d5016',
+            borderRadius: '8px',
+            backgroundColor: '#f9f9f9'
+          }}>
+            <h3 style={{ marginTop: '0', fontSize: '1.1rem', color: '#2d5016' }}>
+              Forgot Username
+            </h3>
+            <p style={{ fontSize: '0.9rem', marginBottom: '12px' }}>
+              Enter your email address and we'll send you your username.
+            </p>
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '2px solid rgb(79, 62, 45)',
+                borderRadius: '8px',
+                fontSize: '16px',
+                marginBottom: '12px',
+                boxSizing: 'border-box'
+              }}
+            />
+            {forgotMessage && (
+              <div style={{
+                marginBottom: '12px',
+                color: forgotMessage.includes('sent') || forgotMessage.includes('email') ? '#2ecc71' : '#e74c3c',
+                fontSize: '0.9rem'
+              }}>
+                {forgotMessage}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={handleForgotUsername}
+                disabled={isSendingForgot}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  backgroundColor: isSendingForgot ? '#ccc' : '#2d5016',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: isSendingForgot ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}
+              >
+                {isSendingForgot ? 'Sending...' : 'Send Username'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForgotUsername(false);
+                  setForgotEmail('');
+                  setForgotMessage('');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  backgroundColor: '#666',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Forgot Password Modal */}
+        {showForgotPassword && (
+          <div style={{
+            marginTop: '20px',
+            padding: '20px',
+            border: '2px solid #2d5016',
+            borderRadius: '8px',
+            backgroundColor: '#f9f9f9'
+          }}>
+            <h3 style={{ marginTop: '0', fontSize: '1.1rem', color: '#2d5016' }}>
+              Forgot Password
+            </h3>
+            <p style={{ fontSize: '0.9rem', marginBottom: '12px' }}>
+              Enter your email address and we'll send you a password reset link.
+            </p>
+            <input
+              type="email"
+              placeholder="Email Address"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '10px 12px',
+                border: '2px solid rgb(79, 62, 45)',
+                borderRadius: '8px',
+                fontSize: '16px',
+                marginBottom: '12px',
+                boxSizing: 'border-box'
+              }}
+            />
+            {forgotMessage && (
+              <div style={{
+                marginBottom: '12px',
+                color: forgotMessage.includes('sent') || forgotMessage.includes('email') ? '#2ecc71' : '#e74c3c',
+                fontSize: '0.9rem'
+              }}>
+                {forgotMessage}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                disabled={isSendingForgot}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  backgroundColor: isSendingForgot ? '#ccc' : '#2d5016',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: isSendingForgot ? 'not-allowed' : 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}
+              >
+                {isSendingForgot ? 'Sending...' : 'Send Reset Link'}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setForgotEmail('');
+                  setForgotMessage('');
+                }}
+                style={{
+                  flex: 1,
+                  padding: '10px',
+                  backgroundColor: '#666',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
         )}
 
         <div id="newUserSection">
