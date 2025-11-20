@@ -77,34 +77,34 @@ CalZone follows a modern three-tier architecture:
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│                    Client Layer                          │
-│  ┌──────────────────────┐  ┌──────────────────────┐    │
-│  │   Web Application    │  │  Mobile Application  │    │
-│  │   (React + Vite)     │  │     (Flutter)        │    │
-│  └──────────────────────┘  └──────────────────────┘    │
+│                    Client Layer                         │
+│  ┌──────────────────────┐  ┌──────────────────────┐     │
+│  │   Web Application    │  │  Mobile Application  │     │
+│  │   (React + Vite)     │  │     (Flutter)        │     │
+│  └──────────────────────┘  └──────────────────────┘     │
 └─────────────────────────────────────────────────────────┘
                            │
                            │ HTTPS/REST API
                            │
 ┌─────────────────────────────────────────────────────────┐
-│                   Application Layer                      │
-│              (Node.js + Express.js)                      │
-│  ┌──────────┐ ┌────────────┐ ┌──────────┐              │
-│  │  Routes  │→│Controllers │→│ Services │              │
-│  └──────────┘ └────────────┘ └──────────┘              │
-│       ↓              ↓              ↓                    │
-│  ┌──────────────────────────────────────┐              │
-│  │         Middleware Layer              │              │
-│  │  (Auth, Token Refresh, Validation)    │              │
-│  └──────────────────────────────────────┘              │
+│                   Application Layer                     │
+│              (Node.js + Express.js)                     │
+│  ┌──────────┐ ┌────────────┐ ┌──────────┐               │
+│  │  Routes  │→│Controllers │→│ Services │               │
+│  └──────────┘ └────────────┘ └──────────┘               │
+│       ↓              ↓            ↓                     │
+│  ┌──────────────────────────────────────┐               │
+│  │         Middleware Layer             │               │
+│  │  (Auth, Token Refresh, Validation)   │               │
+│  └──────────────────────────────────────┘               │
 └─────────────────────────────────────────────────────────┘
                            │
 ┌─────────────────────────────────────────────────────────┐
-│                     Data Layer                           │
-│  ┌──────────────────┐  ┌──────────────────┐            │
-│  │  MongoDB Atlas   │  │   SendGrid API   │            │
-│  │  (Database)      │  │  (Email Service) │            │
-│  └──────────────────┘  └──────────────────┘            │
+│                     Data Layer                          │
+│  ┌──────────────────┐  ┌──────────────────┐             │
+│  │  MongoDB Atlas   │  │   SendGrid API   │             │
+│  │  (Database)      │  │  (Email Service) │             │
+│  └──────────────────┘  └──────────────────┘             │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -366,7 +366,7 @@ CalZone is deployed on a Digital Ocean Droplet running Ubuntu 22.04 LTS:
 This project was developed as part of COP 4331 at the University of Central Florida.
 
 ### Development Team
-- **Project Lead**: Dexter Pressley
+- **Project Lead**: Phat Huynh
 - **Repository**: [github.com/DexterPressley/CalZone](https://github.com/DexterPressley/CalZone)
 
 ### Development Workflow
