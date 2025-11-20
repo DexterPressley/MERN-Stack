@@ -30,7 +30,9 @@
     "mongoose": "^8.19.1",
     "mongoose-int32": "^0.6.0",
     "nodemailer": "^7.0.10",
-    "sendgrid": "^5.2.3"
+    "sendgrid": "^5.2.3",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10"

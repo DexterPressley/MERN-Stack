@@ -3,6 +3,9 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const swaggerUi = require('swagger-ui-express');
+const YAML = require('yamljs');
+const path = require('path');
 
 const app = express();
 
@@ -51,6 +54,18 @@ mongoose.connect(uri, { dbName: 'COP4331Cards' })
     app.use('/api', entryRoutes);
     
     console.log('✅ Routes loaded');
+    
+    // API Documentation - Swagger UI
+    try {
+      const swaggerDocument = YAML.load(path.join(__dirname, '../docs/api/openapi.yaml'));
+      app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+        customCss: '.swagger-ui .topbar { display: none }',
+        customSiteTitle: "CalZone API Documentation"
+      }));
+      console.log('📚 Swagger UI available at /api-docs');
+    } catch (error) {
+      console.error('⚠️  Failed to load Swagger documentation:', error.message);
+    }
   })
   .catch((err) => {
     console.error('❌ MongoDB connection error:', err.message);
