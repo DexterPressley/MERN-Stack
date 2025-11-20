@@ -1,5 +1,5 @@
 // backend/middleware/authMiddleware.js
-const token = require('../createJWT');
+const token = require('../services/jwtService');
 
 // Middleware to validate JWT token from Authorization header
 const authMiddleware = (req, res, next) => {

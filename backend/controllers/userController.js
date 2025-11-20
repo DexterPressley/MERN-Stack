@@ -1,9 +1,9 @@
 // backend/controllers/userController.js
 const bcrypt = require('bcryptjs');
 const User = require('../models/user');
-const token = require('../createJWT');
+const token = require('../services/jwtService');
 const crypto = require('crypto');
-const { sendVerificationEmail, sendUsernameEmail, sendPasswordResetEmail } = require('../../cards/emailService');
+const { sendVerificationEmail, sendUsernameEmail, sendPasswordResetEmail } = require('../services/emailService');
 
 // Register a new user
 exports.register = async (req, res) => {

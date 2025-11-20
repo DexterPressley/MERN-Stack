@@ -1,5 +1,5 @@
 // backend/middleware/tokenRefresh.js
-const token = require('../createJWT');
+const token = require('../services/jwtService');
 
 // Middleware to refresh JWT token and attach to response header
 const tokenRefresh = (req, res, next) => {
