@@ -284,7 +284,7 @@ CalZone/
 |----------|-------------|---------|
 | `PORT` | Server port number | `5000` |
 | `NODE_ENV` | Environment mode | `development` or `production` |
-| `MONGODB_URI` | MongoDB Atlas connection string | `mongodb+srv://user:pass@cluster.mongodb.net/calzone` |
+| `MONGODB_URI` | MongoDB Atlas connection string | `mongodb+srv://<username>:<password>@<cluster>.mongodb.net/<dbname>` |
 | `ACCESS_TOKEN_SECRET` | JWT signing secret | `your-secret-key-min-32-chars` |
 | `SENDGRID_API_KEY` | SendGrid API key for emails | `SG.xxxxxxxxxxxxxxxx` |
 | `EMAIL_USER` | Sender email address | `noreply@calzone.com` |
